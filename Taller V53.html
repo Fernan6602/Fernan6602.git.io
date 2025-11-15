@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultra Manager - Ultra Services Aviacion</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* TODOS LOS ESTILOS SE MANTIENEN IGUALES */
+        :root {
+            --primary: #1e40af;
+            --secondary: #475569;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --aviation-blue: #0369a1;
+            --battery-color: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px; /* Espacio para la barra inferior */
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--aviation-blue) 0%, var(--primary) 100%);
+            padding: 30px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            color: #fbbf24;
+        }
+        
+        .logo-text h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .logo-text .version {
+            background: rgba(251, 191, 36, 0.9);
+            color: #92400e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .header-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 30px;
+        }
+        
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--aviation-blue) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(30, 64, 175, 0.4);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-info {
+            background: var(--aviation-blue);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Backup Section - ELIMINADA porque los botones ya están en la barra inferior */
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card.warning { border-left-color: var(--warning); }
+        .stat-card.success { border-left-color: var(--success); }
+        .stat-card.danger { border-left-color: var(--danger); }
+        .stat-card.battery { border-left-color: var(--battery-color); }
+        
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin: 10px 0;
+            color: var(--dark);
+        }
+        
+        /* Equipment Gallery */
+        .equipment-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .equipment-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .equipment-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .equipment-card.selected {
+            border: 3px solid var(--primary);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.3);
+        }
+        
+        .checkbox-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 2;
+        }
+        
+        .equipment-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .equipment-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .equipment-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .equipment-image .placeholder {
+            color: var(--secondary);
+            text-align: center;
+        }
+        
+        .equipment-info {
+            padding: 20px;
+        }
+        
+        .equipment-model {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .equipment-type {
+            color: var(--secondary);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .water-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .water-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .water-ok {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+        
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status.active { background: #d1fae5; color: #065f46; }
+        .status.maintenance { background: #fef3c7; color: #92400e; }
+        .status.inactive { background: #fee2e2; color: #991b1b; }
+        .status.water { background: #dbeafe; color: #1e40af; }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+        
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Selection Actions */
+        .selection-actions {
+            background: #f8fafc;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .selection-actions.show {
+            display: flex;
+        }
+        
+        .selection-count {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Report Actions */
+        .report-actions {
+            background: #f0f9ff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #e0f2fe;
+            flex-wrap: wrap;
+        }
+        
+        .report-section {
+            margin: 20px 0;
+        }
+
+        /* Image Upload */
+        .image-upload-container {
+            border: 2px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        
+        .image-upload-container:hover {
+            border-color: var(--primary);
+            background: #f1f5f9;
+        }
+        
+        .image-upload-container.dragover {
+            border-color: var(--primary);
+            background: #e0f2fe;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin: 15px auto;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--aviation-blue) 0%, var(--primary) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-success {
+            background: var(--success);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        .toast-warning {
+            background: var(--warning);
+        }
+        
+        .toast-info {
+            background: var(--aviation-blue);
+        }
+        
+        /* Floating Add Button */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 100px; /* Ajustado para no interferir con la barra inferior */
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--aviation-blue) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.4);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .floating-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(30, 64, 175, 0.5);
+        }
+        
+        /* Bottom Action Bar */
+        .bottom-action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 998;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .bottom-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            min-width: 160px;
+            justify-content: center;
+        }
+        
+        .bottom-btn .key-shortcut {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+            
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filters {
+                justify-content: center;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .equipment-gallery {
+                grid-template-columns: 1fr;
+            }
+            
+            .selection-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .report-actions {
+                flex-direction: column;
+            }
+            
+            .floating-add-btn {
+                bottom: 90px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .bottom-action-bar {
+                flex-wrap: wrap;
+                padding: 10px 15px;
+            }
+            
+            .bottom-btn {
+                min-width: 140px;
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+            
+            body {
+                padding-bottom: 120px; /* Más espacio para la barra inferior en móvil */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Notifications -->
+    <div id="toastContainer"></div>
+    
+    <!-- Floating Add Button -->
+    <button class="floating-add-btn" id="floatingAddBtn">
+        <i class="fas fa-plus"></i>
+    </button>
+    
+    <!-- Bottom Action Bar - MODIFICADA: Se agregó botón de Expedientes Técnicos -->
+    <div class="bottom-action-bar">
+        <button class="bottom-btn btn-primary" id="bottomEditBtn">
+            <i class="fas fa-edit"></i> Editar Selección <span class="key-shortcut">F4</span>
+        </button>
+        <button class="bottom-btn btn-danger" id="bottomDeleteBtn">
+            <i class="fas fa-trash"></i> Borrar Selección <span class="key-shortcut">F8</span>
+        </button>
+        <button class="bottom-btn btn-success" id="bottomBackupBtn">
+            <i class="fas fa-download"></i> Crear Backup <span class="key-shortcut">F5</span>
+        </button>
+        <button class="bottom-btn btn-warning" id="bottomRestoreBtn">
+            <i class="fas fa-upload"></i> Restaurar Backup <span class="key-shortcut">F2</span>
+        </button>
+        <button class="bottom-btn btn-info" id="bottomExpedientesBtn">
+            <i class="fas fa-folder-open"></i> Expedientes Técnicos
+        </button>
+    </div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="logo">
+                    <i class="fas fa-tractor logo-icon"></i>
+                    <div class="logo-text">
+                        <h1>ULTRA SERVICES AVIATION</h1>
+                        <div class="version">v5.3 - Sistema Práctico</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="addTractorBtn">
+                        <i class="fas fa-plus-circle"></i> Agregar Equipo
+                    </button>
+                </div>
+            </div>
+            <div class="header-subtitle">
+                <i class="fas fa-mouse-pointer"></i>
+                Sistema Práctico - Selecciona equipos con checkboxes
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- SE ELIMINÓ LA SECCIÓN DE BACKUP SUPERIOR -->
+
+            <!-- Acciones de Selección -->
+            <div class="selection-actions" id="selectionActions">
+                <div class="selection-count" id="selectedCount">0 equipos seleccionados</div>
+                <button class="btn btn-primary btn-sm" id="editSelectedBtn" disabled>
+                    <i class="fas fa-edit"></i> Editar Seleccionados
+                </button>
+                <button class="btn btn-danger btn-sm" id="deleteSelectedBtn" disabled>
+                    <i class="fas fa-trash"></i> Eliminar Seleccionados
+                </button>
+                <button class="btn btn-sm" id="clearSelectionBtn" style="background: #e2e8f0; color: var(--dark);">
+                    <i class="fas fa-times"></i> Limpiar Selección
+                </button>
+            </div>
+
+            <!-- Sección de Reportes - MODIFICADA: Se cambió el botón de Agua por Expedientes Técnicos -->
+            <div class="report-section">
+                <div class="report-actions">
+                    <h3 style="margin: 0; color: var(--dark);">📊 Generar Reportes:</h3>
+                    <button class="btn btn-info" id="reportGeneralBtn">
+                        <i class="fas fa-print"></i> Reporte General
+                    </button>
+                    <button class="btn btn-success" id="reportOperativosBtn">
+                        <i class="fas fa-check-circle"></i> Equipos Operativos
+                    </button>
+                    <button class="btn btn-warning" id="reportMantenimientoBtn">
+                        <i class="fas fa-tools"></i> En Mantenimiento
+                    </button>
+                    <button class="btn btn-primary" id="reportExpedientesBtn">
+                        <i class="fas fa-folder-open"></i> Expedientes Técnicos
+                    </button>
+                    <button class="btn btn-primary" id="reportJ16Btn">
+                        <i class="fas fa-tractor"></i> Tractores J16
+                    </button>
+                    <button class="btn btn-secondary" id="reportOtrosBtn">
+                        <i class="fas fa-cogs"></i> Otros Equipos
+                    </button>
+                </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Las estadísticas se cargarán dinámicamente -->
+            </div>
+
+            <!-- Filtros - MODIFICADO: Se cambió el filtro de Agua por Expedientes -->
+            <div class="actions-bar">
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">Todos los Equipos</button>
+                    <button class="filter-btn" data-filter="active">Operativos</button>
+                    <button class="filter-btn" data-filter="maintenance">En Mantenimiento</button>
+                    <button class="filter-btn" data-filter="inactive">Inactivos</button>
+                    <button class="filter-btn" data-filter="expedientes">Expedientes Técnicos</button>
+                    <button class="filter-btn" data-filter="j16">Tractores J16</button>
+                </div>
+                <div>
+                    <button class="btn btn-success" id="exportBtn">
+                        <i class="fas fa-file-export"></i> Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Galería de Equipos -->
+            <div class="equipment-gallery" id="equipmentGallery">
+                <!-- Los equipos se cargarán dinámicamente -->
+            </div>
+
+            <!-- Tabla de Equipos -->
+            <div class="table-container">
+                <table id="tractorsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="selectAllCheckbox">
+                            </th>
+                            <th>ID Equipo</th>
+                            <th>Foto</th>
+                            <th>Modelo</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Horómetro</th>
+                            <th>Última Agua</th>
+                            <th>Indicador Agua</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tractorsTableBody">
+                        <!-- Los equipos se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar Equipo -->
+    <div class="modal" id="tractorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Agregar Nuevo Equipo</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="tractorForm">
+                    <input type="hidden" id="editTractorId">
+                    <input type="hidden" id="currentPhoto">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ID del Equipo *</label>
+                            <input type="text" class="form-control" id="tractorId" placeholder="Se generará automáticamente" readonly>
+                            <small style="color: #64748b; font-size: 0.85rem;">El ID se genera automáticamente</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Modelo *</label>
+                            <input type="text" class="form-control" id="modelo" placeholder="J16 Pushback Master" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Equipo *</label>
+                            <select class="form-control" id="tipo" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option>Tractor de Empuje</option>
+                                <option>Tractor de Remolque</option>
+                                <option>Tractor de Carga</option>
+                                <option>GPU - Unidad de Potencia</option>
+                                <option>Equipo Especializado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horómetro Actual (horas) *</label>
+                            <input type="number" class="form-control" id="horometro" placeholder="1245" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Sección de Foto -->
+                    <div class="form-group">
+                        <label class="form-label">Foto del Equipo</label>
+                        <div class="image-upload-container" id="imageUploadContainer">
+                            <i class="fas fa-camera" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px;"></i>
+                            <p style="color: #64748b; margin-bottom: 15px;">Haz clic o arrastra una imagen aquí</p>
+                            <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="document.getElementById('imageUpload').click()">
+                                <i class="fas fa-upload"></i> Seleccionar Imagen
+                            </button>
+                            <img id="imagePreview" class="image-preview" alt="Vista previa">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Última Carga de Agua *</label>
+                            <input type="date" class="form-control" id="ultimaAgua" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Horas desde Última Agua *</label>
+                            <input type="number" class="form-control" id="horasDesdeAgua" placeholder="50" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Estado *</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="estado" value="active" checked>
+                                    <span>Operativo</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="estado" value="maintenance">
+                                    <span>En Mantenimiento</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="estado" value="inactive">
+                                    <span>Inactivo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Observaciones y Detalles de Reparaciones</label>
+                        <textarea class="form-control" id="observaciones" rows="4" placeholder="Detalles técnicos, reparaciones realizadas, observaciones importantes..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn" style="background: #e2e8f0; color: var(--dark);" id="cancelBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">Guardar Equipo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CLAVE PARA ALMACENAMIENTO LOCAL
+        const STORAGE_KEY = 'ultra_aviation_equipment_data';
+        const BACKUP_KEY = 'ultra_aviation_backup_info';
+
+        // Cargar datos desde localStorage o usar datos por defecto
+        let equipos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+            {
+                id: "TR-2024-001",
+                modelo: "J16 Pushback Master",
+                tipo: "Tractor de Empuje",
+                estado: "active",
+                horometro: "1245",
+                ultimaAgua: "2024-10-15",
+                horasDesdeAgua: 45,
+                foto: null,
+                observaciones: "Equipo en perfecto estado operativo. Batería 80V - 40 vasos.",
+                especificacionBateria: "80V - 40 vasos de 2V"
+            },
+            {
+                id: "TR-2024-002",
+                modelo: "TuG-325 Advanced",
+                tipo: "Tractor de Remolque",
+                estado: "maintenance",
+                horometro: "2890",
+                ultimaAgua: "2024-10-10",
+                horasDesdeAgua: 120,
+                foto: null,
+                observaciones: "En proceso de mantenimiento preventivo. Revisión de sistema de carga.",
+                especificacionBateria: "80V - 40 vasos de 2V"
+            },
+            {
+                id: "TR-2024-003",
+                modelo: "J16 Power Tug",
+                tipo: "Tractor de Empuje",
+                estado: "active",
+                horometro: "890",
+                ultimaAgua: "2024-10-18",
+                horasDesdeAgua: 20,
+                foto: null,
+                observaciones: "Nuevo equipo, en proceso de adaptación.",
+                especificacionBateria: "80V - 40 vasos de 2V"
+            },
+            {
+                id: "TR-2024-004",
+                modelo: "GPU-5000",
+                tipo: "GPU - Unidad de Potencia",
+                estado: "inactive",
+                horometro: "4500",
+                ultimaAgua: "2024-09-25",
+                horasDesdeAgua: 150,
+                foto: null,
+                observaciones: "Requiere mantenimiento mayor del sistema eléctrico.",
+                especificacionBateria: "N/A"
+            }
+        ];
+
+        // Array para almacenar equipos seleccionados
+        let selectedEquipos = [];
+
+        // FUNCIÓN PARA MOSTRAR NOTIFICACIONES
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            
+            // Mostrar toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            // Ocultar y eliminar toast después de 3 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // FUNCIÓN PARA GENERAR ID AUTOMÁTICO
+        function generarIdAutomatico() {
+            const numeros = equipos.map(eq => {
+                const match = eq.id.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            });
+            
+            const maxNum = Math.max(...numeros, 0);
+            return `TR-2024-${String(maxNum + 1).padStart(3, '0')}`;
+        }
+
+        // Función para guardar datos en localStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(equipos));
+                updateStats();
+                return true;
+            } catch (error) {
+                console.error('Error al guardar datos:', error);
+                showToast('Error al guardar datos en el almacenamiento local', 'error');
+                return false;
+            }
+        }
+
+        // Función para crear backup automático
+        function createAutoBackup() {
+            try {
+                const backupData = {
+                    equipos: equipos,
+                    timestamp: new Date().toISOString(),
+                    version: '5.3',
+                    type: 'auto'
+                };
+                
+                // Guardar en localStorage como backup temporal
+                localStorage.setItem('auto_backup_' + new Date().getTime(), JSON.stringify(backupData));
+                
+                // Limpiar backups antiguos (más de 10)
+                const backupKeys = Object.keys(localStorage).filter(key => key.startsWith('auto_backup_'));
+                if (backupKeys.length > 10) {
+                    // Ordenar por timestamp y eliminar los más antiguos
+                    backupKeys.sort().slice(0, -10).forEach(key => localStorage.removeItem(key));
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Error al crear backup automático:', error);
+                return false;
+            }
+        }
+
+        // Función para generar nombre de archivo con fecha
+        function generateBackupFilename() {
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 19).replace(/[:.]/g, '-');
+            return `backup_ultra_aviation_${dateStr}.json`;
+        }
+
+        // FUNCIÓN PARA MANEJAR SELECCIÓN DE EQUIPOS
+        function toggleEquipoSelection(equipoId, isChecked) {
+            if (isChecked) {
+                if (!selectedEquipos.includes(equipoId)) {
+                    selectedEquipos.push(equipoId);
+                }
+            } else {
+                selectedEquipos = selectedEquipos.filter(id => id !== equipoId);
+            }
+            
+            updateSelectionUI();
+        }
+
+        // FUNCIÓN PARA ACTUALIZAR UI DE SELECCIÓN
+        function updateSelectionUI() {
+            const selectedCount = selectedEquipos.length;
+            const selectionActions = document.getElementById('selectionActions');
+            const selectedCountElement = document.getElementById('selectedCount');
+            const editSelectedBtn = document.getElementById('editSelectedBtn');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+            const bottomEditBtn = document.getElementById('bottomEditBtn');
+            const bottomDeleteBtn = document.getElementById('bottomDeleteBtn');
+            
+            // Actualizar contador
+            selectedCountElement.textContent = `${selectedCount} equipo${selectedCount !== 1 ? 's' : ''} seleccionado${selectedCount !== 1 ? 's' : ''}`;
+            
+            // Mostrar/ocultar barra de acciones
+            if (selectedCount > 0) {
+                selectionActions.classList.add('show');
+            } else {
+                selectionActions.classList.remove('show');
+            }
+            
+            // Habilitar/deshabilitar botones
+            editSelectedBtn.disabled = selectedCount === 0;
+            deleteSelectedBtn.disabled = selectedCount === 0;
+            bottomEditBtn.disabled = selectedCount === 0;
+            bottomDeleteBtn.disabled = selectedCount === 0;
+            
+            // Actualizar checkboxes en la galería
+            document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
+                const equipoId = checkbox.getAttribute('data-equipo-id');
+                checkbox.checked = selectedEquipos.includes(equipoId);
+                
+                // Actualizar estilo de la tarjeta
+                const card = checkbox.closest('.equipment-card');
+                if (card) {
+                    if (checkbox.checked) {
+                        card.classList.add('selected');
+                    } else {
+                        card.classList.remove('selected');
+                    }
+                }
+            });
+            
+            // Actualizar checkboxes en la tabla
+            document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+                const equipoId = checkbox.getAttribute('data-equipo-id');
+                checkbox.checked = selectedEquipos.includes(equipoId);
+            });
+            
+            // Actualizar checkbox "Seleccionar todos"
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const totalEquipos = document.querySelectorAll('.table-checkbox').length;
+            selectAllCheckbox.checked = selectedCount > 0 && selectedCount === totalEquipos;
+            selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < totalEquipos;
+        }
+
+        // FUNCIÓN PARA SELECCIONAR/DESELECCIONAR TODOS
+        function toggleSelectAll(isChecked) {
+            if (isChecked) {
+                // Seleccionar todos los equipos visibles
+                const allCheckboxes = document.querySelectorAll('.table-checkbox');
+                selectedEquipos = Array.from(allCheckboxes).map(checkbox => 
+                    checkbox.getAttribute('data-equipo-id')
+                );
+            } else {
+                // Deseleccionar todos
+                selectedEquipos = [];
+            }
+            
+            updateSelectionUI();
+        }
+
+        // FUNCIÓN PARA OBTENER INDICADOR DE AGUA
+        function getWaterIndicator(equipo) {
+            // Solo mostrar indicador de agua para tractores J16
+            if (equipo.modelo && equipo.modelo.includes('J16')) {
+                const horasDesdeAgua = parseInt(equipo.horasDesdeAgua) || 0;
+                if (horasDesdeAgua > 72) {
+                    return `<div class="water-indicator water-pending">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        AGUA PENDIENTE (${horasDesdeAgua}h)
+                    </div>`;
+                } else {
+                    return `<div class="water-indicator water-ok">
+                        <i class="fas fa-check-circle"></i>
+                        Agua OK (${horasDesdeAgua}h)
+                    </div>`;
+                }
+            }
+            return '<div style="color: #64748b; font-size: 0.8rem;">No aplica</div>';
+        }
+
+        // FUNCIÓN PARA FILTRAR EQUIPOS - MODIFICADA: Se agregó filtro de expedientes
+        function filterEquipos(filter) {
+            let equiposFiltrados = [];
+            
+            switch(filter) {
+                case 'all':
+                    equiposFiltrados = equipos;
+                    break;
+                case 'active':
+                    equiposFiltrados = equipos.filter(eq => eq.estado === 'active');
+                    break;
+                case 'maintenance':
+                    equiposFiltrados = equipos.filter(eq => eq.estado === 'maintenance');
+                    break;
+                case 'inactive':
+                    equiposFiltrados = equipos.filter(eq => eq.estado === 'inactive');
+                    break;
+                case 'expedientes':
+                    // Filtro para equipos que requieren atención en expedientes técnicos
+                    equiposFiltrados = equipos.filter(eq => 
+                        eq.observaciones && eq.observaciones.length > 50 // Ejemplo: equipos con observaciones extensas
+                    );
+                    break;
+                case 'j16':
+                    equiposFiltrados = equipos.filter(eq => 
+                        eq.modelo && eq.modelo.includes('J16')
+                    );
+                    break;
+                default:
+                    equiposFiltrados = equipos;
+            }
+            
+            // Actualizar tabla y galería con equipos filtrados
+            renderFilteredEquipos(equiposFiltrados);
+        }
+
+        // FUNCIÓN PARA RENDERIZAR EQUIPOS FILTRADOS
+        function renderFilteredEquipos(equiposFiltrados) {
+            // Actualizar tabla
+            const tractorsTableBody = document.getElementById('tractorsTableBody');
+            tractorsTableBody.innerHTML = '';
+            
+            equiposFiltrados.forEach(equipo => {
+                const row = document.createElement('tr');
+                
+                let estadoClass = '';
+                let estadoText = '';
+                switch(equipo.estado) {
+                    case 'active':
+                        estadoClass = 'active';
+                        estadoText = 'Operativo';
+                        break;
+                    case 'maintenance':
+                        estadoClass = 'maintenance';
+                        estadoText = 'En Mantenimiento';
+                        break;
+                    case 'inactive':
+                        estadoClass = 'inactive';
+                        estadoText = 'Inactivo';
+                        break;
+                }
+                
+                const isSelected = selectedEquipos.includes(equipo.id);
+                
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="table-checkbox" data-equipo-id="${equipo.id}" ${isSelected ? 'checked' : ''}>
+                    </td>
+                    <td><strong>${equipo.id}</strong></td>
+                    <td>
+                        ${equipo.foto ? 
+                            `<img src="${equipo.foto}" alt="${equipo.modelo}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">` : 
+                            '<div style="width: 50px; height: 50px; background: #e2e8f0; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #64748b;"><i class="fas fa-camera"></i></div>'
+                        }
+                    </td>
+                    <td>${equipo.modelo}</td>
+                    <td>${equipo.tipo}</td>
+                    <td><span class="status ${estadoClass}">${estadoText}</span></td>
+                    <td>${equipo.horometro} hrs</td>
+                    <td>${equipo.ultimaAgua}</td>
+                    <td>${getWaterIndicator(equipo)}</td>
+                `;
+                
+                tractorsTableBody.appendChild(row);
+            });
+
+            // Agregar event listeners a los checkboxes de la tabla
+            document.querySelectorAll('.table-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const equipoId = this.getAttribute('data-equipo-id');
+                    toggleEquipoSelection(equipoId, this.checked);
+                });
+            });
+
+            // Actualizar galería
+            const equipmentGallery = document.getElementById('equipmentGallery');
+            equipmentGallery.innerHTML = '';
+            
+            equiposFiltrados.forEach(equipo => {
+                const card = document.createElement('div');
+                card.className = 'equipment-card';
+                
+                let estadoClass = '';
+                let estadoText = '';
+                switch(equipo.estado) {
+                    case 'active':
+                        estadoClass = 'active';
+                        estadoText = 'Operativo';
+                        break;
+                    case 'maintenance':
+                        estadoClass = 'maintenance';
+                        estadoText = 'En Mantenimiento';
+                        break;
+                    case 'inactive':
+                        estadoClass = 'inactive';
+                        estadoText = 'Inactivo';
+                        break;
+                }
+                
+                const isSelected = selectedEquipos.includes(equipo.id);
+                if (isSelected) {
+                    card.classList.add('selected');
+                }
+                
+                card.innerHTML = `
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="equipment-checkbox" data-equipo-id="${equipo.id}" ${isSelected ? 'checked' : ''}>
+                    </div>
+                    <div class="equipment-image">
+                        ${equipo.foto ? 
+                            `<img src="${equipo.foto}" alt="${equipo.modelo}">` : 
+                            `<div class="placeholder">
+                                <i class="fas fa-tractor" style="font-size: 3rem;"></i>
+                                <p>Sin imagen</p>
+                            </div>`
+                        }
+                    </div>
+                    <div class="equipment-info">
+                        <div class="equipment-model">${equipo.modelo}</div>
+                        <div class="equipment-type">${equipo.tipo}</div>
+                        <div><strong>ID:</strong> ${equipo.id}</div>
+                        <div><strong>Horómetro:</strong> ${equipo.horometro} hrs</div>
+                        <div><strong>Última agua:</strong> ${equipo.ultimaAgua}</div>
+                        <div><strong>Estado:</strong> <span class="status ${estadoClass}">${estadoText}</span></div>
+                        ${getWaterIndicator(equipo)}
+                    </div>
+                `;
+                
+                equipmentGallery.appendChild(card);
+            });
+
+            // Agregar event listeners a los checkboxes de la galería
+            document.querySelectorAll('.equipment-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const equipoId = this.getAttribute('data-equipo-id');
+                    toggleEquipoSelection(equipoId, this.checked);
+                });
+            });
+        }
+
+        // FUNCIÓN PARA ACTUALIZAR ESTADÍSTICAS - MODIFICADA: Se cambió Agua Pendiente por Expedientes
+        function updateStats() {
+            const totalEquipos = equipos.length;
+            const equiposOperativos = equipos.filter(eq => eq.estado === 'active').length;
+            const equiposMantenimiento = equipos.filter(eq => eq.estado === 'maintenance').length;
+            const equiposInactivos = equipos.filter(eq => eq.estado === 'inactive').length;
+            const equiposExpedientes = equipos.filter(eq => 
+                eq.observaciones && eq.observaciones.length > 50
+            ).length;
+            const tractoresJ16 = equipos.filter(eq => 
+                eq.modelo && eq.modelo.includes('J16')
+            ).length;
+            const otrosEquipos = totalEquipos - tractoresJ16;
+
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card" onclick="filtrarPorEstadistica('all')">
+                    <h3>Total Equipos</h3>
+                    <div class="stat-number">${totalEquipos}</div>
+                    <p>Haz clic para ver todos los equipos</p>
+                </div>
+                <div class="stat-card success" onclick="filtrarPorEstadistica('active')">
+                    <h3>Operativos</h3>
+                    <div class="stat-number">${equiposOperativos}</div>
+                    <p>Haz clic para ver equipos operativos</p>
+                </div>
+                <div class="stat-card warning" onclick="filtrarPorEstadistica('maintenance')">
+                    <h3>En Mantenimiento</h3>
+                    <div class="stat-number">${equiposMantenimiento}</div>
+                    <p>Haz clic para ver equipos en mantenimiento</p>
+                </div>
+                <div class="stat-card" onclick="filtrarPorEstadistica('inactive')">
+                    <h3>Inactivos</h3>
+                    <div class="stat-number">${equiposInactivos}</div>
+                    <p>Haz clic para ver equipos inactivos</p>
+                </div>
+                <div class="stat-card danger" onclick="filtrarPorEstadistica('expedientes')">
+                    <h3>Expedientes Técnicos</h3>
+                    <div class="stat-number">${equiposExpedientes}</div>
+                    <p>Haz clic para ver expedientes técnicos</p>
+                </div>
+                <div class="stat-card battery" onclick="filtrarPorEstadistica('j16')">
+                    <h3>Tractores J16</h3>
+                    <div class="stat-number">${tractoresJ16}</div>
+                    <p>Haz clic para ver tractores J16</p>
+                </div>
+            `;
+        }
+
+        // FUNCIÓN GLOBAL para filtrar desde las tarjetas de estadísticas
+        window.filtrarPorEstadistica = function(filtro) {
+            // Remover clase active de todos los botones de filtro
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Agregar clase active al botón correspondiente
+            const botonCorrespondiente = document.querySelector(`[data-filter="${filtro}"]`);
+            if (botonCorrespondiente) {
+                botonCorrespondiente.classList.add('active');
+            }
+            
+            // Aplicar el filtro
+            filterEquipos(filtro);
+        };
+
+        // FUNCIONES GLOBALES para editar y eliminar
+        window.editEquipo = function(id) {
+            const equipo = equipos.find(eq => eq.id === id);
+            if (equipo) {
+                openModal(equipo);
+            }
+        };
+
+        window.deleteEquipo = function(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este equipo?')) {
+                equipos = equipos.filter(eq => eq.id !== id);
+                if (saveToLocalStorage()) {
+                    renderEquipos();
+                    renderEquipmentGallery();
+                    updateStats();
+                    showToast('Equipo eliminado exitosamente!');
+                }
+            }
+        };
+
+        // FUNCIÓN PARA CREAR BACKUP MANUAL
+        function createManualBackup() {
+            try {
+                const backupData = {
+                    equipos: equipos,
+                    timestamp: new Date().toISOString(),
+                    version: '5.3',
+                    type: 'manual',
+                    totalEquipos: equipos.length
+                };
+                
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = generateBackupFilename();
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('Backup creado y descargado exitosamente!');
+            } catch (error) {
+                console.error('Error al crear backup:', error);
+                showToast('Error al crear el backup', 'error');
+            }
+        }
+
+        // FUNCIÓN PARA RESTAURAR BACKUP
+        function restoreBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // VALIDAR que sea un backup válido
+                    if (!backupData.equipos || !Array.isArray(backupData.equipos)) {
+                        throw new Error('Formato de backup inválido');
+                    }
+                    
+                    if (confirm(`¿Restaurar backup con ${backupData.equipos.length} equipos? Se perderán los datos actuales.`)) {
+                        equipos = backupData.equipos;
+                        if (saveToLocalStorage()) {
+                            renderEquipos();
+                            renderEquipmentGallery();
+                            updateStats();
+                            showToast('Backup restaurado exitosamente!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al restaurar backup:', error);
+                    showToast('Error al restaurar backup: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Limpiar input
+        }
+
+        // FUNCIÓN PARA EXPORTAR CSV
+        function exportToCSV() {
+            try {
+                const headers = ['ID', 'Modelo', 'Tipo', 'Estado', 'Horómetro', 'Última Agua', 'Horas Desde Agua', 'Observaciones'];
+                const csvData = [
+                    headers.join(','),
+                    ...equipos.map(equipo => [
+                        equipo.id,
+                        `"${equipo.modelo}"`,
+                        `"${equipo.tipo}"`,
+                        equipo.estado,
+                        equipo.horometro,
+                        equipo.ultimaAgua,
+                        equipo.horasDesdeAgua,
+                        `"${equipo.observaciones || ''}"`
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `equipos_aviation_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('Datos exportados a CSV exitosamente!');
+            } catch (error) {
+                console.error('Error al exportar CSV:', error);
+                showToast('Error al exportar datos a CSV', 'error');
+            }
+        }
+
+        // FUNCIÓN PARA GENERAR REPORTE CON FILTRO - MODIFICADA: Se agregó reporte de expedientes
+        function generateReport(titulo, equiposFiltrados) {
+            // Crear ventana de reporte
+            const reportWindow = window.open('', '_blank');
+            if (!reportWindow) {
+                showToast('Por favor, permite las ventanas emergentes para generar el reporte', 'warning');
+                return;
+            }
+
+            const totalEquipos = equiposFiltrados.length;
+            const equiposOperativos = equiposFiltrados.filter(eq => eq.estado === 'active').length;
+            const equiposMantenimiento = equiposFiltrados.filter(eq => eq.estado === 'maintenance').length;
+            const equiposInactivos = equiposFiltrados.filter(eq => eq.estado === 'inactive').length;
+            const totalHoras = equiposFiltrados.reduce((sum, eq) => sum + parseInt(eq.horometro), 0);
+
+            const reportContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${titulo} - Ultra Services Aviation</title>
+                    <style>
+                        body { 
+                            font-family: 'Segoe UI', Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 20px; 
+                            background: #f8fafc;
+                        }
+                        .report-container {
+                            max-width: 1200px;
+                            margin: 0 auto;
+                            background: white;
+                            padding: 30px;
+                            border-radius: 15px;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                        }
+                        .header { 
+                            text-align: center; 
+                            margin-bottom: 30px; 
+                            border-bottom: 3px solid #1e40af;
+                            padding-bottom: 20px;
+                        }
+                        .header h1 { 
+                            color: #1e40af; 
+                            margin: 0; 
+                            font-size: 2.5rem;
+                        }
+                        .header h2 { 
+                            color: #475569; 
+                            margin: 10px 0; 
+                            font-weight: normal;
+                        }
+                        .summary-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 15px;
+                            margin: 25px 0;
+                        }
+                        .summary-card {
+                            background: #f8fafc;
+                            padding: 20px;
+                            border-radius: 10px;
+                            text-align: center;
+                            border-left: 4px solid #1e40af;
+                        }
+                        .summary-card.warning { border-left-color: #d97706; }
+                        .summary-card.success { border-left-color: #059669; }
+                        .summary-card.danger { border-left-color: #dc2626; }
+                        .summary-number {
+                            font-size: 2rem;
+                            font-weight: bold;
+                            margin: 10px 0;
+                            color: #1e293b;
+                        }
+                        .equipment-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                            gap: 20px;
+                            margin: 25px 0;
+                        }
+                        .equipment-card-report {
+                            background: white;
+                            border: 2px solid #e2e8f0;
+                            border-radius: 12px;
+                            overflow: hidden;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        }
+                        .equipment-image-report {
+                            width: 100%;
+                            height: 200px;
+                            background: #f1f5f9;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            overflow: hidden;
+                        }
+                        .equipment-image-report img {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                        }
+                        .equipment-info-report {
+                            padding: 15px;
+                        }
+                        .equipment-model-report {
+                            font-size: 1.2rem;
+                            font-weight: bold;
+                            color: #1e40af;
+                            margin-bottom: 8px;
+                        }
+                        .status-badge {
+                            padding: 4px 8px;
+                            border-radius: 12px;
+                            font-size: 0.8rem;
+                            font-weight: bold;
+                            display: inline-block;
+                        }
+                        .status-active { background: #d1fae5; color: #065f46; }
+                        .status-maintenance { background: #fef3c7; color: #92400e; }
+                        .status-inactive { background: #fee2e2; color: #991b1b; }
+                        .water-indicator-report {
+                            padding: 4px 8px;
+                            border-radius: 8px;
+                            font-size: 0.8rem;
+                            font-weight: bold;
+                            margin-top: 5px;
+                            display: inline-block;
+                        }
+                        .water-pending-report { background: #fef3c7; color: #92400e; }
+                        .water-ok-report { background: #d1fae5; color: #065f46; }
+                        .footer {
+                            text-align: center;
+                            margin-top: 30px;
+                            padding-top: 20px;
+                            border-top: 1px solid #e2e8f0;
+                            color: #64748b;
+                            font-size: 0.9rem;
+                        }
+                        @media print {
+                            body { background: white; }
+                            .report-container { box-shadow: none; }
+                            .no-print { display: none; }
+                            .equipment-grid {
+                                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="report-container">
+                        <div class="header">
+                            <h1>ULTRA SERVICES AVIATION</h1>
+                            <h2>${titulo}</h2>
+                            <p><strong>Generado:</strong> ${new Date().toLocaleDateString('es-ES', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}</p>
+                        </div>
+                        
+                        <div class="summary-grid">
+                            <div class="summary-card">
+                                <h3>Total Equipos</h3>
+                                <div class="summary-number">${totalEquipos}</div>
+                            </div>
+                            <div class="summary-card success">
+                                <h3>Operativos</h3>
+                                <div class="summary-number">${equiposOperativos}</div>
+                            </div>
+                            <div class="summary-card warning">
+                                <h3>En Mantenimiento</h3>
+                                <div class="summary-number">${equiposMantenimiento}</div>
+                            </div>
+                            <div class="summary-card">
+                                <h3>Inactivos</h3>
+                                <div class="summary-number">${equiposInactivos}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="equipment-grid">
+                            ${equiposFiltrados.map(equipo => {
+                                let estadoClass = '';
+                                let estadoText = '';
+                                switch(equipo.estado) {
+                                    case 'active':
+                                        estadoClass = 'status-active';
+                                        estadoText = 'Operativo';
+                                        break;
+                                    case 'maintenance':
+                                        estadoClass = 'status-maintenance';
+                                        estadoText = 'En Mantenimiento';
+                                        break;
+                                    case 'inactive':
+                                        estadoClass = 'status-inactive';
+                                        estadoText = 'Inactivo';
+                                        break;
+                                }
+                                
+                                const waterIndicator = equipo.modelo && equipo.modelo.includes('J16') ? 
+                                    (parseInt(equipo.horasDesdeAgua) > 72 ? 
+                                        `<div class="water-indicator-report water-pending-report">AGUA PENDIENTE (${equipo.horasDesdeAgua}h)</div>` :
+                                        `<div class="water-indicator-report water-ok-report">Agua OK (${equipo.horasDesdeAgua}h)</div>`
+                                    ) : '';
+                                
+                                return `
+                                    <div class="equipment-card-report">
+                                        <div class="equipment-image-report">
+                                            ${equipo.foto ? 
+                                                `<img src="${equipo.foto}" alt="${equipo.modelo}">` : 
+                                                `<div style="text-align: center; color: #64748b;">
+                                                    <i class="fas fa-tractor" style="font-size: 3rem;"></i>
+                                                    <p>Sin imagen</p>
+                                                </div>`
+                                            }
+                                        </div>
+                                        <div class="equipment-info-report">
+                                            <div class="equipment-model-report">${equipo.modelo}</div>
+                                            <div><strong>ID:</strong> ${equipo.id}</div>
+                                            <div><strong>Tipo:</strong> ${equipo.tipo}</div>
+                                            <div><strong>Horómetro:</strong> ${equipo.horometro} hrs</div>
+                                            <div><strong>Última agua:</strong> ${equipo.ultimaAgua}</div>
+                                            <div><strong>Estado:</strong> <span class="status-badge ${estadoClass}">${estadoText}</span></div>
+                                            ${waterIndicator}
+                                            ${equipo.observaciones ? `<div style="margin-top: 8px; font-size: 0.9rem; color: #64748b;"><strong>Observaciones:</strong> ${equipo.observaciones}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="footer">
+                            <p>Sistema Ultra Manager v5.3 - Total de horas operativas: ${totalHoras} hrs</p>
+                            <button class="no-print" onclick="window.print()" style="
+                                background: #1e40af;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                margin: 10px;
+                            ">🖨️ Imprimir Reporte</button>
+                            <button class="no-print" onclick="window.close()" style="
+                                background: #64748b;
+                                color: white;
+                                border: none;
+                                padding: 10px 20px;
+                                border-radius: 5px;
+                                cursor: pointer;
+                                margin: 10px;
+                            ">❌ Cerrar</button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            reportWindow.document.write(reportContent);
+            reportWindow.document.close();
+            
+            // Enfocar la ventana de reporte
+            reportWindow.focus();
+        }
+
+        // Inicializar la aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando Sistema Práctico v5.3...');
+            
+            // Referencias a elementos del DOM
+            const modal = document.getElementById('tractorModal');
+            const addTractorBtn = document.getElementById('addTractorBtn');
+            const floatingAddBtn = document.getElementById('floatingAddBtn');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const tractorForm = document.getElementById('tractorForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const exportBtn = document.getElementById('exportBtn');
+            const imageUpload = document.getElementById('imageUpload');
+            const imagePreview = document.getElementById('imagePreview');
+            const imageUploadContainer = document.getElementById('imageUploadContainer');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            const editSelectedBtn = document.getElementById('editSelectedBtn');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+            const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+            
+            // Botones de la barra inferior
+            const bottomEditBtn = document.getElementById('bottomEditBtn');
+            const bottomDeleteBtn = document.getElementById('bottomDeleteBtn');
+            const bottomBackupBtn = document.getElementById('bottomBackupBtn');
+            const bottomRestoreBtn = document.getElementById('bottomRestoreBtn');
+            const bottomExpedientesBtn = document.getElementById('bottomExpedientesBtn');
+            
+            // Botones de reportes
+            const reportGeneralBtn = document.getElementById('reportGeneralBtn');
+            const reportOperativosBtn = document.getElementById('reportOperativosBtn');
+            const reportMantenimientoBtn = document.getElementById('reportMantenimientoBtn');
+            const reportExpedientesBtn = document.getElementById('reportExpedientesBtn');
+            const reportJ16Btn = document.getElementById('reportJ16Btn');
+            const reportOtrosBtn = document.getElementById('reportOtrosBtn');
+
+            // Input para restaurar backup (se mantiene oculto)
+            const restoreFile = document.createElement('input');
+            restoreFile.type = 'file';
+            restoreFile.accept = '.json';
+            restoreFile.style.display = 'none';
+            document.body.appendChild(restoreFile);
+
+            // Cargar datos iniciales
+            renderEquipos();
+            renderEquipmentGallery();
+            updateStats();
+
+            // Configurar filtros
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remover clase active de todos los botones
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    // Agregar clase active al botón clickeado
+                    this.classList.add('active');
+                    // Filtrar equipos
+                    const filter = this.getAttribute('data-filter');
+                    filterEquipos(filter);
+                });
+            });
+
+            // Evento para abrir modal de agregar equipo desde el botón flotante
+            floatingAddBtn.addEventListener('click', function() {
+                openModal();
+            });
+
+            // Evento para abrir modal de agregar equipo desde el botón del header
+            addTractorBtn.addEventListener('click', function() {
+                openModal();
+            });
+
+            // Eventos para reportes
+            reportGeneralBtn.addEventListener('click', function() {
+                generateReport('Reporte General - Todos los Equipos', equipos);
+            });
+
+            reportOperativosBtn.addEventListener('click', function() {
+                const equiposOperativos = equipos.filter(eq => eq.estado === 'active');
+                generateReport('Reporte - Equipos Operativos', equiposOperativos);
+            });
+
+            reportMantenimientoBtn.addEventListener('click', function() {
+                const equiposMantenimiento = equipos.filter(eq => eq.estado === 'maintenance');
+                generateReport('Reporte - Equipos en Mantenimiento', equiposMantenimiento);
+            });
+
+            reportExpedientesBtn.addEventListener('click', function() {
+                const equiposExpedientes = equipos.filter(eq => 
+                    eq.observaciones && eq.observaciones.length > 50
+                );
+                generateReport('Reporte - Expedientes Técnicos', equiposExpedientes);
+            });
+
+            reportJ16Btn.addEventListener('click', function() {
+                const tractoresJ16 = equipos.filter(eq => 
+                    eq.modelo && eq.modelo.includes('J16')
+                );
+                generateReport('Reporte - Tractores J16', tractoresJ16);
+            });
+
+            reportOtrosBtn.addEventListener('click', function() {
+                const otrosEquipos = equipos.filter(eq => 
+                    !eq.modelo.includes('J16')
+                );
+                generateReport('Reporte - Otros Equipos', otrosEquipos);
+            });
+
+            // Evento para crear backup manual desde barra inferior
+            bottomBackupBtn.addEventListener('click', function() {
+                createManualBackup();
+            });
+
+            // Evento para restaurar backup desde barra inferior
+            bottomRestoreBtn.addEventListener('click', function() {
+                restoreFile.click();
+            });
+
+            // Evento para expedientes técnicos desde barra inferior
+            bottomExpedientesBtn.addEventListener('click', function() {
+                const equiposExpedientes = equipos.filter(eq => 
+                    eq.observaciones && eq.observaciones.length > 50
+                );
+                generateReport('Expedientes Técnicos - Todos los Equipos', equiposExpedientes);
+            });
+
+            // Evento para seleccionar archivo de restauración
+            restoreFile.addEventListener('change', function(e) {
+                restoreBackup(e);
+            });
+
+            // Eventos para cerrar modal
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Evento para subir imagen
+            imageUpload.addEventListener('change', function(e) {
+                handleImageUpload(e);
+            });
+
+            // Drag and drop para imágenes
+            imageUploadContainer.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            imageUploadContainer.addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
+            });
+
+            imageUploadContainer.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    imageUpload.files = e.dataTransfer.files;
+                    handleImageUpload({ target: imageUpload });
+                }
+            });
+
+            // Evento para enviar formulario
+            tractorForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEquipo();
+            });
+
+            // Evento para exportar CSV
+            exportBtn.addEventListener('click', function() {
+                exportToCSV();
+            });
+
+            // Evento para seleccionar/deseleccionar todos
+            selectAllCheckbox.addEventListener('change', function() {
+                toggleSelectAll(this.checked);
+            });
+
+            // Evento para editar seleccionados
+            editSelectedBtn.addEventListener('click', function() {
+                if (selectedEquipos.length === 1) {
+                    // Editar un solo equipo
+                    const equipo = equipos.find(eq => eq.id === selectedEquipos[0]);
+                    if (equipo) {
+                        openModal(equipo);
+                    }
+                } else {
+                    showToast('Por favor, selecciona solo un equipo para editar.', 'warning');
+                }
+            });
+
+            // Evento para eliminar seleccionados
+            deleteSelectedBtn.addEventListener('click', function() {
+                if (selectedEquipos.length > 0) {
+                    if (confirm(`¿Estás seguro de que quieres eliminar ${selectedEquipos.length} equipo${selectedEquipos.length !== 1 ? 's' : ''}?`)) {
+                        equipos = equipos.filter(eq => !selectedEquipos.includes(eq.id));
+                        if (saveToLocalStorage()) {
+                            selectedEquipos = [];
+                            renderEquipos();
+                            renderEquipmentGallery();
+                            updateStats();
+                            updateSelectionUI();
+                            showToast('Equipos eliminados exitosamente!');
+                        }
+                    }
+                }
+            });
+
+            // Evento para limpiar selección
+            clearSelectionBtn.addEventListener('click', function() {
+                selectedEquipos = [];
+                updateSelectionUI();
+            });
+
+            // Eventos para botones de la barra inferior
+            bottomEditBtn.addEventListener('click', function() {
+                if (selectedEquipos.length === 1) {
+                    // Editar un solo equipo
+                    const equipo = equipos.find(eq => eq.id === selectedEquipos[0]);
+                    if (equipo) {
+                        openModal(equipo);
+                    }
+                } else {
+                    showToast('Por favor, selecciona solo un equipo para editar.', 'warning');
+                }
+            });
+
+            bottomDeleteBtn.addEventListener('click', function() {
+                if (selectedEquipos.length > 0) {
+                    if (confirm(`¿Estás seguro de que quieres eliminar ${selectedEquipos.length} equipo${selectedEquipos.length !== 1 ? 's' : ''}?`)) {
+                        equipos = equipos.filter(eq => !selectedEquipos.includes(eq.id));
+                        if (saveToLocalStorage()) {
+                            selectedEquipos = [];
+                            renderEquipos();
+                            renderEquipmentGallery();
+                            updateStats();
+                            updateSelectionUI();
+                            showToast('Equipos eliminados exitosamente!');
+                        }
+                    }
+                }
+            });
+
+            // Manejo de teclas de función
+            document.addEventListener('keydown', function(e) {
+                // Evitar que se activen cuando se está escribiendo en un campo de texto
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                    return;
+                }
+                
+                switch(e.key) {
+                    case 'F2':
+                        e.preventDefault();
+                        restoreFile.click();
+                        break;
+                    case 'F4':
+                        e.preventDefault();
+                        if (selectedEquipos.length === 1) {
+                            const equipo = equipos.find(eq => eq.id === selectedEquipos[0]);
+                            if (equipo) {
+                                openModal(equipo);
+                            }
+                        } else {
+                            showToast('Por favor, selecciona solo un equipo para editar.', 'warning');
+                        }
+                        break;
+                    case 'F5':
+                        e.preventDefault();
+                        createManualBackup();
+                        break;
+                    case 'F8':
+                        e.preventDefault();
+                        if (selectedEquipos.length > 0) {
+                            if (confirm(`¿Estás seguro de que quieres eliminar ${selectedEquipos.length} equipo${selectedEquipos.length !== 1 ? 's' : ''}?`)) {
+                                equipos = equipos.filter(eq => !selectedEquipos.includes(eq.id));
+                                if (saveToLocalStorage()) {
+                                    selectedEquipos = [];
+                                    renderEquipos();
+                                    renderEquipmentGallery();
+                                    updateStats();
+                                    updateSelectionUI();
+                                    showToast('Equipos eliminados exitosamente!');
+                                }
+                            }
+                        }
+                        break;
+                }
+            });
+
+            // Función para manejar subida de imagen
+            function handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // Validar tipo de archivo
+                    if (!file.type.match('image.*')) {
+                        showToast('Por favor, selecciona solo archivos de imagen', 'error');
+                        return;
+                    }
+                    
+                    // Validar tamaño (máximo 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showToast('La imagen es demasiado grande (máximo 5MB)', 'error');
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            // Función para abrir modal (agregar o editar)
+            function openModal(equipo = null) {
+                console.log('Abriendo modal para:', equipo ? 'editar' : 'agregar');
+                
+                if (equipo) {
+                    // Modo edición
+                    modalTitle.textContent = `Editar Equipo: ${equipo.id}`;
+                    document.getElementById('editTractorId').value = equipo.id;
+                    document.getElementById('tractorId').value = equipo.id;
+                    document.getElementById('modelo').value = equipo.modelo;
+                    document.getElementById('tipo').value = equipo.tipo;
+                    document.getElementById('horometro').value = equipo.horometro;
+                    document.getElementById('ultimaAgua').value = equipo.ultimaAgua;
+                    document.getElementById('horasDesdeAgua').value = equipo.horasDesdeAgua;
+                    document.getElementById('observaciones').value = equipo.observaciones || '';
+                    document.getElementById('currentPhoto').value = equipo.foto || '';
+                    
+                    // Mostrar foto existente si hay
+                    if (equipo.foto) {
+                        imagePreview.src = equipo.foto;
+                        imagePreview.style.display = 'block';
+                    } else {
+                        imagePreview.style.display = 'none';
+                    }
+                    
+                    // Establecer estado
+                    document.querySelector(`input[name="estado"][value="${equipo.estado}"]`).checked = true;
+                    
+                    // Hacer el ID de solo lectura en modo edición
+                    document.getElementById('tractorId').readOnly = true;
+                } else {
+                    // Modo agregar - GENERAR ID AUTOMÁTICO
+                    modalTitle.textContent = 'Agregar Nuevo Equipo';
+                    document.getElementById('editTractorId').value = '';
+                    document.getElementById('currentPhoto').value = '';
+                    tractorForm.reset();
+                    imagePreview.style.display = 'none';
+                    document.getElementById('tractorId').readOnly = false;
+                    
+                    // GENERAR ID AUTOMÁTICAMENTE
+                    document.getElementById('tractorId').value = generarIdAutomatico();
+                    
+                    // Establecer fecha por defecto (hoy)
+                    const today = new Date();
+                    document.getElementById('ultimaAgua').value = today.toISOString().split('T')[0];
+                    document.getElementById('horasDesdeAgua').value = 0;
+                }
+                
+                modal.style.display = 'flex';
+            }
+
+            // FUNCIÓN CORREGIDA: Guardar equipo (AGREGAR/EDITAR)
+            function saveEquipo() {
+                console.log('Guardando equipo...');
+                
+                // Validar formulario
+                if (!validateForm()) {
+                    return;
+                }
+                
+                const fotoData = imagePreview.style.display !== 'none' ? imagePreview.src : document.getElementById('currentPhoto').value;
+                
+                const equipoData = {
+                    id: document.getElementById('tractorId').value,
+                    modelo: document.getElementById('modelo').value,
+                    tipo: document.getElementById('tipo').value,
+                    horometro: document.getElementById('horometro').value,
+                    ultimaAgua: document.getElementById('ultimaAgua').value,
+                    horasDesdeAgua: document.getElementById('horasDesdeAgua').value,
+                    estado: document.querySelector('input[name="estado"]:checked').value,
+                    observaciones: document.getElementById('observaciones').value,
+                    foto: fotoData
+                };
+
+                const editId = document.getElementById('editTractorId').value;
+                
+                if (editId) {
+                    // Modo edición - ACTUALIZAR equipo existente
+                    const index = equipos.findIndex(eq => eq.id === editId);
+                    if (index !== -1) {
+                        equipos[index] = { ...equipos[index], ...equipoData };
+                    }
+                } else {
+                    // Modo nuevo - AGREGAR directamente (ya tenemos ID automático)
+                    equipos.push(equipoData);
+                }
+                
+                if (saveToLocalStorage()) {
+                    renderEquipos();
+                    renderEquipmentGallery();
+                    updateStats();
+                    closeModal();
+                    showToast('Equipo guardado exitosamente!');
+                }
+            }
+            
+            // Función para validar formulario
+            function validateForm() {
+                const modelo = document.getElementById('modelo').value.trim();
+                const tipo = document.getElementById('tipo').value;
+                const horometro = document.getElementById('horometro').value;
+                const ultimaAgua = document.getElementById('ultimaAgua').value;
+                const horasDesdeAgua = document.getElementById('horasDesdeAgua').value;
+                
+                if (!modelo) {
+                    showToast('Por favor, ingresa el modelo del equipo', 'error');
+                    return false;
+                }
+                
+                if (!tipo) {
+                    showToast('Por favor, selecciona el tipo de equipo', 'error');
+                    return false;
+                }
+                
+                if (!horometro || horometro < 0) {
+                    showToast('Por favor, ingresa un valor válido para el horómetro', 'error');
+                    return false;
+                }
+                
+                if (!ultimaAgua) {
+                    showToast('Por favor, selecciona la fecha de última carga de agua', 'error');
+                    return false;
+                }
+                
+                if (!horasDesdeAgua || horasDesdeAgua < 0) {
+                    showToast('Por favor, ingresa un valor válido para las horas desde la última carga de agua', 'error');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            // Función para cerrar modal
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+
+            // FUNCIÓN PARA RENDERIZAR EQUIPOS EN TABLA
+            function renderEquipos() {
+                filterEquipos('all');
+            }
+
+            // FUNCIÓN PARA RENDERIZAR GALERÍA
+            function renderEquipmentGallery() {
+                filterEquipos('all');
+            }
+
+            // Backup al cerrar la página
+            window.addEventListener('beforeunload', function() {
+                createAutoBackup();
+            });
+
+        });
+    </script>
+</body>
+</html>
