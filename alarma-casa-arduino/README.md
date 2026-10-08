@@ -15,6 +15,20 @@ Código de los videos del canal de YouTube.
 | D11 | Botón armar/desarmar (a GND) |
 | I2C | LCD 16x2 dirección 0x27 |
 
+## 📌 Resumen de conexiones
+
+- 🏠 D2 → puerta principal
+- 🌴 D3 → terraza
+- 🔊 D8 → buzzer
+- 🔴 D9 → LED rojo
+- 🟡 D10 → LED amarillo
+- 🔘 D11 → botón armar/desarmar
+- 🟡 Sistema armado → amarillo fijo
+- 🟠 Alarma disparada → rojo + amarillo intermitentes
+- 🔒 Alarma enclavada (no se apaga sola)
+- ⏱️ Retardo de salida → 15 segundos
+- 📟 LCD funcionando
+
 ## Funcionamiento
 
 - 🟡 LED amarillo fijo = sistema **ARMADO**
