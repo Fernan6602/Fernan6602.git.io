@@ -1,0 +1,2354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Control de Pagos y Gastos V4.51</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  html, body { width: 100%; max-width: 100%; margin: 0; padding: 0; }
+  body{
+    font-family:Arial,sans-serif;
+    padding:10px;
+    padding-bottom:80px;
+    background:#f4f6f8;
+    box-sizing:border-box;
+  }
+  
+  .header-principal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(46,125,50,0.3);
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .header-left { display: flex; align-items: center; gap: 15px; flex: 1; min-width: 200px; }
+  
+  .logo-container {
+    width: 60px; height: 60px; background: white; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: all 0.3s; overflow: hidden; position: relative; flex-shrink: 0;
+  }
+  .logo-container:hover { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+  .logo-container img { width: 100%; height: 100%; object-fit: cover; }
+  .logo-placeholder { font-size: 32px; color: #2e7d32; }
+  .header-titulo h1 { margin: 0; font-size: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+  .header-titulo p { margin: 2px 0 0 0; font-size: 12px; opacity: 0.9; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .header-info-salva {
+    background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px;
+    font-family: monospace; font-size: 12px; max-width: 300px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .btn-header {
+    background: rgba(255,255,255,0.25); color: white;
+    border: 2px solid rgba(255,255,255,0.4);
+    padding: 8px 14px; border-radius: 8px; cursor: pointer;
+    font-weight: bold; font-size: 13px; transition: all 0.3s;
+    display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .btn-header:hover { background: rgba(255,255,255,0.4); transform: translateY(-2px); }
+  
+  /* =========================================================
+     ⭐ V4.50 - MENÚ DE ICONOS SVG EN EL HEADER VERDE
+     ========================================================= */
+  .header-menu {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0 6px;
+    justify-content: center;
+  }
+
+  .menu-btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35));
+    background: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .menu-btn:hover {
+    transform: translateY(-5px) scale(1.15);
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+  }
+
+  .menu-btn:active {
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  .menu-btn::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: transform 0.25s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    z-index: 100;
+  }
+
+  .menu-btn:hover::after {
+    transform: translateX(-50%) scale(1);
+  }
+  
+  .acciones-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; flex-wrap: nowrap; gap: 6px; justify-content: center; align-items: center;
+    padding: 10px 8px; background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15); border-top: 2px solid #2e7d32;
+    overflow-x: auto; z-index: 500;
+  }
+  .acciones-bar::-webkit-scrollbar { height: 5px; }
+  .acciones-bar::-webkit-scrollbar-thumb { background: #2e7d32; border-radius: 3px; }
+  .btn-accion {
+    background: linear-gradient(145deg, #ffffff, #f0f0f0); color: #333;
+    border: 2px solid #d0d0d0; padding: 8px 12px; border-radius: 10px;
+    cursor: pointer; font-weight: bold; font-size: 12px;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: all 0.25s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin: 0; white-space: nowrap; flex: 0 0 auto;
+  }
+  .btn-accion span.icon { font-size: 14px; }
+  .btn-accion:hover { transform: translateY(-2px); background: linear-gradient(145deg, #e3f2fd, #bbdefb); border-color: #64b5f6; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.25); }
+  .btn-accion.azul { background: linear-gradient(145deg, #e3f2fd, #bbdefb); border-color: #64b5f6; color: #1565c0; }
+  .btn-accion.azul:hover { background: linear-gradient(145deg, #2196F3, #1976D2); border-color: #1976D2; color: white; }
+  .btn-accion.verde { background: linear-gradient(145deg, #e8f5e9, #c8e6c9); border-color: #81c784; color: #2e7d32; }
+  .btn-accion.verde:hover { background: linear-gradient(145deg, #2e7d32, #1b5e20); border-color: #1b5e20; color: white; }
+  .btn-accion.orange { background: linear-gradient(145deg, #fff3e0, #ffe0b2); border-color: #ffb74d; color: #e65100; }
+  .btn-accion.orange:hover { background: linear-gradient(145deg, #ff9800, #f57c00); border-color: #f57c00; color: white; }
+  .btn-accion.rojo { background: linear-gradient(145deg, #ffebee, #ffcdd2); border-color: #ef9a9a; color: #c62828; }
+  .btn-accion.rojo:hover { background: linear-gradient(145deg, #f44336, #c62828); border-color: #c62828; color: white; }
+  .separador-acciones { width: 1px; height: 25px; background: #ccc; margin: 0 4px; flex-shrink: 0; }
+  
+  .btn-volver {
+    background: linear-gradient(135deg, #ff9800, #f57c00); color: white;
+    border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;
+    font-weight: bold; font-size: 15px; margin-bottom: 10px;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 10px rgba(255, 152, 0, 0.35); transition: all 0.3s;
+  }
+  .btn-volver:hover { background: linear-gradient(135deg, #f57c00, #ef6c00); transform: translateX(-3px); box-shadow: 0 6px 15px rgba(255, 152, 0, 0.45); }
+  .vista-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .vista-titulo { font-size: 18px; font-weight: bold; color: #2e7d32; display: flex; align-items: center; gap: 8px; }
+  
+  .container{width: 100%; max-width: 100%; margin: 0 auto; padding: 0; box-sizing: border-box;}
+  .tab-content{display:none;background:#fff;padding:16px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.06);margin-top:10px;max-height:calc(100vh - 280px);overflow:auto}
+  label{display:inline-block;margin-right:8px}
+  input, select, button{padding:6px;margin:6px 4px;border-radius:4px;border:1px solid #ccc}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{padding:8px;border:1px solid #ddd;text-align:center}
+  th{background:#2e7d32;color:white}
+  .btn-blue{background:#2196F3;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .btn-danger{background:#f44336;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+  .btn-orange{background:#ff9800;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .btn-green{background:#2e7d32;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .btn-purple{background:#9c27b0;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .btn-pink{background:#e91e63;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .btn-deep-purple{background:#673ab7;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700}
+  .summary{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .card{background:#2196F3;color:#fff;padding:10px 14px;border-radius:6px;font-weight:700}
+  .tax-row{display:inline-block;margin-left:6px}
+  .hidden{display:none}
+  .total-row{background:#e8f5e8;font-weight:bold}
+  .filter-section{background:#f8f9fa;padding:10px;border-radius:6px;margin:10px 0;border-left:4px solid #2196F3}
+  .filter-section.gastos{border-left-color:#f44336}
+  .taxes-detail {background: #e8f5e8; padding: 8px; margin: 5px 0; border-radius: 4px; border-left: 3px solid #2e7d32;}
+  .tax-item {display: inline-block; margin-right: 15px; font-weight: bold;}
+  .saldo-final {background: linear-gradient(135deg,#2196F3,#1976D2);color:#fff;padding:20px;border-radius:10px;margin:20px 0;text-align:center;box-shadow:0 4px 12px rgba(33,150,243,0.3)}
+  .saldo-final h3{margin:0 0 10px 0;font-size:18px}
+  .saldo-final .monto{font-size:32px;font-weight:bold;margin:5px 0}
+  .saldo-final .detalle{font-size:14px;opacity:0.9;margin-top:10px}
+  .saldo-positivo{background: linear-gradient(135deg,#2e7d32,#1b5e20);box-shadow:0 4px 12px rgba(46,125,50,0.3)}
+  .saldo-negativo{background: linear-gradient(135deg,#f44336,#c62828);box-shadow:0 4px 12px rgba(244,67,54,0.3)}
+  .modal-reporte{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;overflow:auto}
+  .modal-contenido{background:#fff;margin:30px auto;padding:20px;border-radius:10px;max-width:1400px;width:95%;position:relative}
+  .modal-botones{position:sticky;top:0;background:#fff;padding:12px;border-bottom:2px solid #eee;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:10}
+  .cerrar-modal{position:absolute;top:10px;right:15px;background:#f44336;color:#fff;border:none;border-radius:50%;width:35px;height:35px;font-size:20px;cursor:pointer;font-weight:bold}
+  .config-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px}
+  .config-panel{background:#f8f9fa;border-radius:8px;padding:15px;border-top:4px solid #2196F3}
+  .config-panel h3{margin-top:0;color:#1976D2;font-size:16px}
+  .config-panel.bancos{border-top-color:#2196F3}
+  .config-panel.categorias{border-top-color:#ff9800}
+  .config-panel.destinos{border-top-color:#9c27b0}
+  .config-lista{max-height:280px;overflow-y:auto;background:#fff;border-radius:6px;padding:8px;margin:10px 0}
+  .config-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid #eee}
+  .config-item:last-child{border-bottom:none}
+  .config-item span{font-weight:500;font-size:14px}
+  .config-item button{background:#f44336;color:#fff;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:12px;margin:0}
+  .config-add{display:flex;gap:5px;margin-top:10px}
+  .config-add input{flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;margin:0;font-size:13px}
+  .config-add button{background:#2e7d32;color:#fff;border:none;padding:8px 10px;border-radius:4px;cursor:pointer;font-weight:700;margin:0;font-size:12px}
+  .config-panel.destinos .config-add button{background:#9c27b0}
+  .info-carga{background:#e8f5e8;padding:8px;border-radius:6px;margin:5px 0;text-align:center;font-size:13px;color:#2e7d32;font-weight:bold}
+  .info-alerta{background:#fff3cd;padding:10px;border-radius:6px;margin:10px 0;text-align:center;font-size:14px;color:#856404;border-left:4px solid #ff9800}
+  
+  .modal-salva { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 2000; justify-content: center; align-items: center; }
+  .modal-salva-contenido { background: #fff; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+  .modal-salva-contenido h2 { color: #2e7d32; margin-top: 0; }
+  .modal-salva-contenido .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .modal-salva-contenido .btn-group button { padding: 12px 24px; font-size: 16px; font-weight: bold; }
+
+  .modal-selector-reporte {
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.75);
+    z-index: 2500; justify-content: center; align-items: center;
+  }
+  .modal-selector-contenido {
+    background: #fff; padding: 30px; border-radius: 14px;
+    max-width: 480px; width: 92%; text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    border-top: 6px solid #2e7d32;
+  }
+  .modal-selector-contenido h2 { color: #2e7d32; margin: 0 0 8px 0; font-size: 22px; }
+  .modal-selector-contenido p { color: #666; font-size: 13px; margin: 0 0 20px 0; }
+  .modal-selector-contenido .campo-grupo { text-align: left; margin-bottom: 14px; }
+  .modal-selector-contenido .campo-grupo label { display: block; font-weight: bold; color: #333; margin-bottom: 5px; font-size: 13px; }
+  .modal-selector-contenido .campo-grupo select {
+    width: 100%; padding: 10px; margin: 0; font-size: 14px;
+    border-radius: 6px; border: 2px solid #ddd; box-sizing: border-box;
+  }
+  .modal-selector-contenido .campo-grupo select:focus { border-color: #2e7d32; outline: none; }
+  .modal-selector-botones { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .modal-selector-botones button { padding: 11px 22px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; margin: 0; }
+  
+  .buscador-destino{display:inline-block;position:relative}
+  
+  #destinoGasto, #filtroDestino { max-width: 180px; width: 180px; }
+  #filtroDestinoLibre { max-width: 150px; width: 150px; }
+  #filtroUsuario { max-width: 130px; width: 130px; }
+  #filtroDescripcion { max-width: 140px; width: 140px; }
+  #descripcionGasto, #descripcionPago { max-width: 200px; width: 200px; }
+  #categoriaGasto, #bancoGasto, #destinoGasto { max-width: 160px; }
+  #usuarioGasto { max-width: 120px; }
+  
+  .filter-section { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .filter-section label { margin: 0; display: inline-flex; align-items: center; gap: 4px; }
+  .filter-section select, .filter-section input { margin: 0; }
+  .filter-section strong { margin-right: 5px; }
+  
+  @media (max-width:1100px) {
+    .config-grid{grid-template-columns:repeat(2,1fr)}
+    .menu-btn { width: 48px; height: 48px; }
+    .header-menu { gap: 6px; }
+  }
+  @media (max-width:900px){ 
+    .menu-btn { width: 42px; height: 42px; }
+    .header-menu { gap: 5px; }
+  }
+  @media (max-width:700px){ 
+    .config-grid{grid-template-columns:1fr}
+    #destinoGasto, #filtroDestino { max-width: 130px; width: 130px; }
+    #filtroDestinoLibre { max-width: 110px; width: 110px; }
+    .header-titulo h1 { font-size: 16px; }
+    .header-titulo p { font-size: 10px; }
+    .menu-btn { width: 38px; height: 38px; }
+    .header-menu {
+      gap: 4px;
+      order: 3;
+      width: 100%;
+      justify-content: center;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+  }
+  @media (max-width: 600px) {
+    .btn-accion { padding: 6px 8px; font-size: 11px; }
+    .btn-accion span.icon { font-size: 13px; }
+    .logo-container { width: 50px; height: 50px; }
+    .logo-placeholder { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  
+  <!-- ⭐ HEADER CON LOGO, MENÚ DE ICONOS Y BOTONES -->
+  <div class="header-principal">
+    <div class="header-left">
+      <div class="logo-container" onclick="document.getElementById('logoInput').click()" title="Clic para cambiar el logo">
+        <img id="logoImg" src="" alt="Logo" style="display:none">
+        <div class="logo-placeholder" id="logoPlaceholder">💼</div>
+      </div>
+      <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="cargarLogo(event)">
+      <div class="header-titulo">
+        <h1>Control Financiero</h1>
+        <p>Pagos y Gastos — V4.51</p>
+      </div>
+    </div>
+    
+    <!-- ⭐ MENÚ DE ICONOS SVG -->
+    <div class="header-menu">
+      
+      <button class="menu-btn" data-tip="Agregar Ingresos" onclick="abrir('pagos')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradPagos" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#c8e6c9"/>
+              <stop offset="50%" stop-color="#4caf50"/>
+              <stop offset="100%" stop-color="#1b5e20"/>
+            </radialGradient>
+            <filter id="glowPagos" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradPagos)" filter="url(#glowPagos)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <circle cx="50" cy="55" r="22" fill="#ffd54f" stroke="#8b6914" stroke-width="1.5"/>
+          <text x="50" y="66" font-size="26" font-weight="bold" fill="#8b6914" text-anchor="middle" font-family="Arial">$</text>
+          <path d="M 68 40 L 78 30 L 88 40 L 83 40 L 83 50 L 73 50 L 73 40 Z" fill="#ffffff" stroke="#1b5e20" stroke-width="1"/>
+        </svg>
+      </button>
+
+      <button class="menu-btn" data-tip="Agregar Gastos" onclick="abrir('gastos')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradGastos" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#ffcdd2"/>
+              <stop offset="50%" stop-color="#f44336"/>
+              <stop offset="100%" stop-color="#b71c1c"/>
+            </radialGradient>
+            <filter id="glowGastos" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradGastos)" filter="url(#glowGastos)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <rect x="26" y="35" width="48" height="32" rx="4" fill="#ffffff" stroke="#b71c1c" stroke-width="1.5"/>
+          <rect x="26" y="42" width="48" height="7" fill="#b71c1c"/>
+          <rect x="32" y="55" width="14" height="4" rx="1" fill="#b71c1c"/>
+          <circle cx="68" cy="58" r="4" fill="#ffd54f"/>
+        </svg>
+      </button>
+
+      <button class="menu-btn" data-tip="Reportes Generales" onclick="abrir('resumen')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradResumen" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#bbdefb"/>
+              <stop offset="50%" stop-color="#2196f3"/>
+              <stop offset="100%" stop-color="#0d47a1"/>
+            </radialGradient>
+            <filter id="glowResumen" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradResumen)" filter="url(#glowResumen)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <rect x="28" y="55" width="10" height="22" rx="2" fill="#ffffff" stroke="#0d47a1" stroke-width="1"/>
+          <rect x="43" y="45" width="10" height="32" rx="2" fill="#ffd54f" stroke="#0d47a1" stroke-width="1"/>
+          <rect x="58" y="35" width="10" height="42" rx="2" fill="#ffffff" stroke="#0d47a1" stroke-width="1"/>
+          <line x1="24" y1="80" x2="78" y2="80" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <button class="menu-btn" data-tip="Vista por Fecha" onclick="abrir('vista')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradVista" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#e1bee7"/>
+              <stop offset="50%" stop-color="#9c27b0"/>
+              <stop offset="100%" stop-color="#4a148c"/>
+            </radialGradient>
+            <filter id="glowVista" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradVista)" filter="url(#glowVista)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <rect x="28" y="34" width="44" height="42" rx="4" fill="#ffffff" stroke="#4a148c" stroke-width="1.5"/>
+          <rect x="28" y="34" width="44" height="10" rx="4" fill="#9c27b0"/>
+          <circle cx="38" cy="32" r="3" fill="#4a148c"/>
+          <circle cx="62" cy="32" r="3" fill="#4a148c"/>
+          <text x="50" y="66" font-size="18" font-weight="bold" fill="#4a148c" text-anchor="middle" font-family="Arial">15</text>
+        </svg>
+      </button>
+
+      <button class="menu-btn" data-tip="Reportes de Taxes" onclick="abrir('taxes')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradTaxes" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#ffe0b2"/>
+              <stop offset="50%" stop-color="#ff9800"/>
+              <stop offset="100%" stop-color="#e65100"/>
+            </radialGradient>
+            <filter id="glowTaxes" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradTaxes)" filter="url(#glowTaxes)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <line x1="26" y1="78" x2="74" y2="78" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          <line x1="26" y1="78" x2="26" y2="34" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          <polyline points="32,68 44,58 56,62 68,40" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="32" cy="68" r="3" fill="#ffd54f"/>
+          <circle cx="44" cy="58" r="3" fill="#ffd54f"/>
+          <circle cx="56" cy="62" r="3" fill="#ffd54f"/>
+          <circle cx="68" cy="40" r="4" fill="#ffd54f" stroke="#fff" stroke-width="1.5"/>
+        </svg>
+      </button>
+
+      <button class="menu-btn" data-tip="Configuración" onclick="abrir('config')">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradConfig" cx="35%" cy="30%" r="75%">
+              <stop offset="0%" stop-color="#cfd8dc"/>
+              <stop offset="50%" stop-color="#607d8b"/>
+              <stop offset="100%" stop-color="#263238"/>
+            </radialGradient>
+            <filter id="glowConfig" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+          <circle cx="50" cy="50" r="46" fill="url(#gradConfig)" filter="url(#glowConfig)"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+          <ellipse cx="35" cy="32" rx="14" ry="8" fill="#ffffff" opacity="0.3"/>
+          <g transform="translate(50 50)">
+            <g fill="#ffffff" stroke="#263238" stroke-width="1">
+              <rect x="-4" y="-28" width="8" height="12" rx="2"/>
+              <rect x="-4" y="16" width="8" height="12" rx="2"/>
+              <rect x="-28" y="-4" width="12" height="8" rx="2"/>
+              <rect x="16" y="-4" width="12" height="8" rx="2"/>
+              <rect x="-22" y="-22" width="10" height="10" rx="2" transform="rotate(45 -17 -17)"/>
+              <rect x="12" y="-22" width="10" height="10" rx="2" transform="rotate(-45 17 -17)"/>
+              <rect x="-22" y="12" width="10" height="10" rx="2" transform="rotate(-45 -17 17)"/>
+              <rect x="12" y="12" width="10" height="10" rx="2" transform="rotate(45 17 17)"/>
+            </g>
+            <circle r="16" fill="#607d8b" stroke="#263238" stroke-width="1.5"/>
+            <circle r="7" fill="#ffffff" stroke="#263238" stroke-width="1"/>
+          </g>
+        </svg>
+      </button>
+
+    </div>
+
+    <div class="header-right">
+      <div class="header-info-salva" id="infoSalvaHeader">📂 Sin datos cargados</div>
+      <button class="btn-header" onclick="diagnosticoStorage()">💾 Storage</button>
+      <button class="btn-header" onclick="quitarLogo()" title="Quitar logo">🗑️</button>
+    </div>
+  </div>
+  
+  <div id="infoCarga" class="info-carga" style="display:none"></div>
+  <div id="infoAlerta" class="info-alerta" style="display:none"></div>
+
+  <!-- ⭐ BOTÓN VOLVER -->
+  <div id="barraVolver" class="vista-header" style="display:none">
+    <button class="btn-volver" onclick="volverAlMenu()">
+      ← Volver al Menú
+    </button>
+    <div class="vista-titulo" id="tituloSeccion"></div>
+  </div>
+
+  <!-- Pagos -->
+  <div id="pagos" class="tab-content">
+    <h2>💰 Registrar Pagos</h2>
+    <div>
+      <label>Fecha:<input id="fechaPago" placeholder="DD/MM/AAAA" /></label>
+      <label>Monto:<input id="montoPago" type="number" step="0.01" /></label>
+      <label>Concepto:
+        <select id="conceptoPago">
+          <option value="Sueldo">Sueldo</option>
+          <option value="Ventas">Ventas</option>
+          <option value="Prestamo">Préstamo</option>
+        </select>
+      </label>
+      <label>Descripción:
+        <input id="descripcionPago" type="text" placeholder="Ej: Cliente Juan" />
+      </label>
+      <span id="taxesBlock" class="hidden">
+        <span class="tax-row">FITW:<input id="taxFITW" type="number" step="0.01" style="width:100px"/></span>
+        <span class="tax-row">MED:<input id="taxMED" type="number" step="0.01" style="width:100px"/></span>
+        <span class="tax-row">SS:<input id="taxSS" type="number" step="0.01" style="width:100px"/></span>
+      </span>
+      <button id="btnAgregarPago" class="btn-blue">Agregar Pago</button>
+    </div>
+
+    <div class="filter-section" style="margin-top:8px">
+      <strong>🔍 Filtrar Pagos:</strong>
+      <select id="filtroPago">
+        <option value="">Todos los conceptos</option>
+        <option>Sueldo</option><option>Ventas</option><option>Prestamo</option>
+      </select>
+      <label>Año:
+        <select id="filtroAnioPago"><option value="">Todos</option></select>
+      </label>
+      <label>Mes:
+        <select id="filtroMesPago">
+          <option value="">Todos</option>
+          <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+          <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+          <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </label>
+      <input id="filtroDescripcionPago" type="text" placeholder="🔍 Buscar descripción..." style="max-width:150px" />
+      <button id="btnAplicarFiltroPago" class="btn-blue">Filtrar</button>
+      <button id="btnLimpiarFiltroPago" class="btn-blue" style="background:#6c757d">Limpiar</button>
+      <button id="btnReportePagos" class="btn-green">📋 Generar Reporte</button>
+    </div>
+
+    <table id="tablaPagos"><thead><tr>
+      <th><input id="checkAllPagos" type="checkbox" /></th>
+      <th>#</th><th>Fecha</th><th>Concepto</th><th>Descripción</th><th>Monto</th><th>Acciones</th>
+    </tr></thead><tbody></tbody></table>
+    
+    <div id="saldoPagosFiltrado"></div>
+  </div>
+
+  <!-- Gastos -->
+  <div id="gastos" class="tab-content">
+    <h2>💳 Registrar Gastos</h2>
+    <div>
+      <label>Fecha:<input id="fechaGasto" placeholder="DD/MM/AAAA" /></label>
+      <label>Monto:<input id="montoGasto" type="number" step="0.01" /></label>
+      <label>Categoría:
+        <select id="categoriaGasto"></select>
+      </label>
+      <label>Banco:
+        <select id="bancoGasto"></select>
+      </label>
+      <label>Usuario:
+        <input id="usuarioGasto" type="text" placeholder="Nombre" />
+      </label>
+      <label>Proveedor/Agencia:
+        <select id="destinoGasto"></select>
+      </label>
+      <label>Descripción:
+        <input id="descripcionGasto" type="text" placeholder="Ej: Repelente mosquitos" />
+      </label>
+      <button id="btnAgregarGasto" class="btn-blue">Agregar Gasto</button>
+    </div>
+
+    <div class="filter-section gastos" style="margin-top:8px">
+      <strong>🔍 Filtrar Gastos:</strong>
+      <select id="filtroGasto">
+        <option value="">Todas las categorías</option>
+      </select>
+      <select id="filtroBanco">
+        <option value="">Todos los Bancos</option>
+      </select>
+      <select id="filtroDestino">
+        <option value="">Todos los Proveedores</option>
+      </select>
+      <span class="buscador-destino">
+        <input id="filtroDestinoLibre" type="text" placeholder="🔍 Buscar proveedor..." />
+      </span>
+      <input id="filtroUsuario" type="text" placeholder="Buscar usuario..." />
+      <input id="filtroDescripcion" type="text" placeholder="🔍 Buscar descripción..." />
+      <label>Año:
+        <select id="filtroAnioGasto"><option value="">Todos</option></select>
+      </label>
+      <label>Mes:
+        <select id="filtroMesGasto">
+          <option value="">Todos</option>
+          <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+          <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+          <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </label>
+      <button id="btnAplicarFiltroGasto" class="btn-blue">Filtrar</button>
+      <button id="btnLimpiarFiltroGasto" class="btn-blue" style="background:#6c757d">Limpiar</button>
+      <button id="btnReporteGastos" class="btn-green">📋 Generar Reporte</button>
+    </div>
+
+    <table id="tablaGastos"><thead><tr>
+      <th><input id="checkAllGastos" type="checkbox" /></th>
+      <th>#</th><th>Fecha</th><th>Categoría</th>
+      <th>Banco</th>
+      <th>Usuario</th>
+      <th>Proveedor/Agencia</th>
+      <th>Descripción</th>
+      <th>Monto</th><th>Acciones</th>
+    </tr></thead><tbody></tbody></table>
+    
+    <div id="saldoGastosFiltrado"></div>
+  </div>
+
+  <!-- Resumen -->
+  <div id="resumen" class="tab-content">
+    <h2>📊 Resumen General</h2>
+    <div class="filter-section">
+      <strong>Filtrar por período:</strong>
+      <label>Año:
+        <select id="filtroAnio">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <label>Mes:
+        <select id="filtroMes">
+          <option value="">Todos</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </label>
+      <button id="btnAplicarFiltro" class="btn-blue">Aplicar Filtro</button>
+      <button id="btnLimpiarFiltro" class="btn-blue" style="background:#6c757d">Limpiar</button>
+    </div>
+    <div class="summary">
+      <div class="card">Total Pagos: $<span id="totalPagos">0.00</span></div>
+      <div class="card" style="background:#f44336">Total Gastos: $<span id="totalGastos">0.00</span></div>
+      <div class="card" style="background:#555">Balance: $<span id="balance">0.00</span></div>
+    </div>
+    <canvas id="grafico" style="max-width:100%;margin-top:12px"></canvas>
+  </div>
+
+  <!-- Vista Previa -->
+  <div id="vista" class="tab-content">
+    <h2>📅 Vista Previa por Fecha</h2>
+    <div class="filter-section">
+      <strong>Filtrar por período:</strong>
+      <label>Año:
+        <select id="filtroAnioVista">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <label>Mes:
+        <select id="filtroMesVista">
+          <option value="">Todos</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </label>
+      <button id="btnAplicarFiltroVista" class="btn-blue">Aplicar Filtro</button>
+      <button id="btnLimpiarFiltroVista" class="btn-blue" style="background:#6c757d">Limpiar</button>
+      <button id="btnReporteFiltrado" class="btn-orange">📋 Reporte Completo</button>
+    </div>
+    <div id="vistaContenido"></div>
+  </div>
+
+  <!-- Reporte de Taxes -->
+  <div id="taxes" class="tab-content">
+    <h2>📈 Reporte Detallado de Taxes</h2>
+    <div class="filter-section">
+      <strong>Filtrar por período:</strong>
+      <label>Año:
+        <select id="filtroAnioTaxes">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <label>Mes:
+        <select id="filtroMesTaxes">
+          <option value="">Todos</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
+      </label>
+      <button id="btnAplicarFiltroTaxes" class="btn-blue">Aplicar Filtro</button>
+      <button id="btnLimpiarFiltroTaxes" class="btn-blue" style="background:#6c757d">Limpiar</button>
+      <button id="btnImprimirTaxes" class="btn-orange">🖨️ Imprimir Reporte</button>
+    </div>
+    <div id="taxesContenido"></div>
+  </div>
+
+  <!-- Configuración -->
+  <div id="config" class="tab-content">
+    <h2>⚙️ Configuración y Ajustes</h2>
+    <p style="color:#666">Administra las listas de Bancos, Categorías y Proveedores/Agencias.</p>
+    
+    <div class="config-grid">
+      <div class="config-panel bancos">
+        <h3>🏦 Bancos</h3>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">
+          Ejemplos: Cash, CapitalOne, Bank of America
+        </p>
+        <div class="config-add">
+          <input type="text" id="nuevoBanco" placeholder="Nombre del banco..." />
+          <button onclick="agregarItemConfig('bancos')" title="Agregar banco">➕ Agregar</button>
+        </div>
+        <div class="config-lista" id="listaBancos"></div>
+      </div>
+      
+      <div class="config-panel categorias">
+        <h3>📁 Categorías</h3>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">
+          Ejemplos: Comida, Gasolina, Renta Casa
+        </p>
+        <div class="config-add">
+          <input type="text" id="nuevaCategoria" placeholder="Nombre categoría..." />
+          <button onclick="agregarItemConfig('categorias')" title="Agregar categoría">➕ Agregar</button>
+        </div>
+        <div class="config-lista" id="listaCategorias"></div>
+      </div>
+      
+      <div class="config-panel destinos">
+        <h3>🎯 Proveedores / Agencias</h3>
+        <p style="font-size: 12px; color: #666; margin: 5px 0;">
+          Ejemplos: Amazon, Temu, CubaMax Yadi, RapiCargo
+        </p>
+        <div class="config-add">
+          <input type="text" id="nuevoDestino" placeholder="Nombre del proveedor..." />
+          <button onclick="agregarItemConfig('destinos')" title="Agregar proveedor">➕ Agregar</button>
+        </div>
+        <div class="config-lista" id="listaDestinos"></div>
+      </div>
+    </div>
+    
+    <div style="margin-top:20px;text-align:center">
+      <button class="btn-green" onclick="guardarConfiguracion()">💾 Guardar Configuración</button>
+      <button class="btn-blue" onclick="restaurarConfigDefault()">🔄 Restaurar por Defecto</button>
+      <button class="btn-orange" onclick="repararDatosAntiguos()">🔧 Reparar Datos Antiguos</button>
+      <button class="btn-purple" onclick="diagnosticoDestinos()">🔍 Diagnóstico</button>
+      <button class="btn-blue" style="background:#607D8B" onclick="diagnosticoStorage()">💾 Ver Storage</button>
+      <button class="btn-pink" onclick="limpiarCaracteresExtraños()">🧹 Limpiar Caracteres</button>
+      <button class="btn-deep-purple" onclick="limpiarProveedores()">🎯 Limpiar Proveedores</button>
+    </div>
+  </div>
+</div>
+
+<!-- ⭐ BARRA DE ACCIONES FIJA EN LA PARTE INFERIOR -->
+<div class="acciones-bar">
+  <button id="btnF2" class="btn-accion verde" title="F2 Guardar Backup"><span class="icon">💾</span>F2 Guardar</button>
+  <button id="btnF3" class="btn-accion orange" title="F3 Generar Reporte"><span class="icon">📋</span>F3 Reporte</button>
+  <button id="btnF4" class="btn-accion azul" title="F4 Editar"><span class="icon">✏️</span>F4 Editar</button>
+  <button id="btnF5" class="btn-accion azul" title="F5 Copiar"><span class="icon">📄</span>F5 Copiar</button>
+  <button id="btnF7" class="btn-accion azul" title="F7 Crear Nuevo"><span class="icon">✨</span>F7 Crear</button>
+  <button id="btnF8" class="btn-accion rojo" title="F8 Borrar"><span class="icon">🗑️</span>F8 Borrar</button>
+  
+  <div class="separador-acciones"></div>
+  
+  <button id="btnCargarSalva" class="btn-accion verde" title="Cargar Salva desde C:/Salva"><span class="icon">📁</span>Cargar Salva</button>
+  
+  <div class="separador-acciones"></div>
+  
+  <button id="btnRestaurar" class="btn-accion azul" title="Restaurar Backup"><span class="icon">📂</span>Restaurar</button>
+  <input id="fileInput" type="file" accept=".json" style="display:none" />
+  <button id="btnExcel" class="btn-accion verde" title="Exportar Excel"><span class="icon">📊</span>Excel</button>
+  <button id="btnPDF" class="btn-accion rojo" title="Exportar PDF"><span class="icon">📄</span>PDF</button>
+  <button id="btnBorrar" class="btn-accion rojo" title="Borrar Seleccionados"><span class="icon">🗑️</span>Borrar Sel.</button>
+  <button id="btnImprimirRapido" class="btn-accion orange" title="Imprimir"><span class="icon">🖨️</span>Imprimir</button>
+</div>
+
+<!-- Modal de Cargar Salva -->
+<div id="modalSalva" class="modal-salva">
+  <div class="modal-salva-contenido">
+    <h2>📁 Cargar Última Salva</h2>
+    <p>Selecciona la carpeta <strong>C:/Salva</strong> y la app buscará el archivo más reciente.</p>
+    
+    <div style="margin: 20px 0;">
+      <button class="btn-green" onclick="seleccionarCarpetaSalva()" style="font-size: 16px; padding: 12px 24px;">
+        📂 Seleccionar Carpeta C:/Salva
+      </button>
+    </div>
+    
+    <div id="resultadoBusquedaSalva" style="margin-top: 20px; text-align: left;"></div>
+    
+    <div class="btn-group" style="margin-top: 20px;">
+      <button class="btn-danger" onclick="cerrarModalSalva()">❌ Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Selector de Reporte (F3) -->
+<div id="modalSelectorReporte" class="modal-selector-reporte">
+  <div class="modal-selector-contenido">
+    <h2>📋 Generar Reporte</h2>
+    <p>Escoge el período que quieres reportar</p>
+    
+    <div class="campo-grupo">
+      <label>Año:</label>
+      <select id="selectorAnioReporte">
+        <option value="">Todos los años</option>
+      </select>
+    </div>
+    
+    <div class="campo-grupo">
+      <label>Mes:</label>
+      <select id="selectorMesReporte">
+        <option value="">Todos los meses</option>
+        <option value="01">Enero</option>
+        <option value="02">Febrero</option>
+        <option value="03">Marzo</option>
+        <option value="04">Abril</option>
+        <option value="05">Mayo</option>
+        <option value="06">Junio</option>
+        <option value="07">Julio</option>
+        <option value="08">Agosto</option>
+        <option value="09">Septiembre</option>
+        <option value="10">Octubre</option>
+        <option value="11">Noviembre</option>
+        <option value="12">Diciembre</option>
+      </select>
+    </div>
+    
+    <div class="campo-grupo">
+      <label>Tipo de Reporte:</label>
+      <select id="selectorTipoReporte">
+        <option value="vista">Reporte Completo (Pagos + Gastos)</option>
+        <option value="pagos">Solo Pagos</option>
+        <option value="gastos">Solo Gastos</option>
+      </select>
+    </div>
+    
+    <div class="modal-selector-botones">
+      <button class="btn-green" onclick="generarReporteDesdeSelector()">✅ Generar</button>
+      <button class="btn-danger" onclick="cerrarSelectorReporte()">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Reporte Filtrado -->
+<div id="modalReporte" class="modal-reporte">
+  <div class="modal-contenido">
+    <button class="cerrar-modal" onclick="cerrarModalReporte()">×</button>
+    <div class="modal-botones">
+      <button class="btn-blue" onclick="imprimirModalReporte()">🖨️ Imprimir</button>
+      <button class="btn-blue" onclick="exportarModalExcel()">📊 Exportar Excel</button>
+      <button class="btn-blue" onclick="exportarModalPDF()">📄 Exportar PDF</button>
+      <button class="btn-danger" onclick="cerrarModalReporte()">❌ Cerrar</button>
+    </div>
+    <div id="modalReporteContenido"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   V4.50 - Menú de iconos en header + Cargar Salva abajo + F3 selector
+   ========================================================= */
+
+let pagos = [];
+let gastos = [];
+let edit = {tipo:null, index:-1};
+let filtroActual = {anio: '', mes: ''};
+let filtroReporte = {anio: '', mes: '', tipo: 'vista', filtrosGastos: {}, filtrosPagos: {}};
+let seccionActual = 'menu';
+let logoEmpresa = null;
+
+let filtrosPagos = {concepto: '', anio: '', mes: '', descripcion: ''};
+let filtrosGastos = {categoria: '', banco: '', destino: '', destinoLibre: '', usuario: '', descripcion: '', anio: '', mes: ''};
+
+let config = {
+  bancos: ['Cash', 'CapitalOne', 'Bank of America', 'CrediUnion'],
+  categorias: ['Bebidas', 'Autopista', 'Comida', 'Gasolina', 'Renta Casa'],
+  destinos: ['Amazon', 'Temu', 'AliExpress', 'CubaMax Yadi', 'RapiCargo', 'TMovil', 'General']
+};
+
+const CONFIG_DEFAULT = {
+  bancos: ['Cash', 'CapitalOne', 'Bank of America', 'CrediUnion'],
+  categorias: ['Bebidas', 'Autopista', 'Comida', 'Gasolina', 'Renta Casa'],
+  destinos: ['Amazon', 'Temu', 'AliExpress', 'CubaMax Yadi', 'RapiCargo', 'TMovil', 'General']
+};
+
+const STORAGE_KEYS = {
+  principal: 'pagos_gastos',
+  version: 'pagos_gastos_v450',
+  autosave: 'pagos_gastos_autosave',
+  ultimo: 'pagos_gastos_lastdata',
+  backup: 'pagos_gastos_backup'
+};
+
+const CONFIG_KEY = 'pagos_gastos_config';
+const ULTIMA_SALVA_KEY = 'pagos_gastos_ultima_salva_nombre';
+const LOGO_KEY = 'pagos_gastos_logo';
+
+const titulosSecciones = {
+  'pagos': '💰 Agregar Ingresos',
+  'gastos': '💳 Agregar Gastos',
+  'resumen': '📊 Reportes Generales',
+  'vista': '📅 Vista por Fecha',
+  'taxes': '📈 Reportes de Taxes',
+  'config': '⚙️ Configuración y Ajustes'
+};
+
+function limpiarTexto(txt) {
+  if(txt === null || txt === undefined) return '';
+  return String(txt)
+    .replace(/^\uFEFF/, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\uFFFD/g, '')
+    .replace(/^[¿¡]+/, '')
+    .replace(/^[?]+/, '')
+    .replace(/[\r\n\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cargarLogo(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  if(!file.type.match('image.*')) { alert('⚠️ Selecciona una imagen (JPG, PNG, etc.)'); return; }
+  if(file.size > 500 * 1024) { alert('⚠️ La imagen es muy grande (máx 500KB).'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    logoEmpresa = e.target.result;
+    localStorage.setItem(LOGO_KEY, logoEmpresa);
+    mostrarLogo();
+  };
+  reader.readAsDataURL(file);
+}
+
+function mostrarLogo() {
+  const img = document.getElementById('logoImg');
+  const placeholder = document.getElementById('logoPlaceholder');
+  if(logoEmpresa) {
+    img.src = logoEmpresa;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    placeholder.style.display = 'block';
+  }
+}
+
+function quitarLogo() {
+  if(!logoEmpresa) { alert('ℹ️ No hay logo configurado'); return; }
+  if(!confirm('¿Quitar el logo de la empresa?')) return;
+  logoEmpresa = null;
+  localStorage.removeItem(LOGO_KEY);
+  mostrarLogo();
+}
+
+(function cargarDatosInmediatamente() {
+  console.log('🚀 V4.50 - Carga automática...');
+  try {
+    const logoGuardado = localStorage.getItem(LOGO_KEY);
+    if(logoGuardado) logoEmpresa = logoGuardado;
+  } catch(e) {}
+  try {
+    const rawConfig = localStorage.getItem(CONFIG_KEY);
+    if(rawConfig) {
+      const cfg = JSON.parse(rawConfig);
+      if(cfg.bancos) config.bancos = cfg.bancos.map(limpiarTexto);
+      if(cfg.categorias) config.categorias = cfg.categorias.map(limpiarTexto);
+      if(cfg.destinos) config.destinos = cfg.destinos.map(limpiarTexto);
+    }
+  } catch(e) {}
+  
+  const keysABuscar = [
+    STORAGE_KEYS.backup, STORAGE_KEYS.ultimo, STORAGE_KEYS.autosave,
+    STORAGE_KEYS.version, STORAGE_KEYS.principal
+  ];
+  let mejorData = null, mejorTotal = -1, mejorKey = '';
+  for(const key of keysABuscar) {
+    try {
+      const raw = localStorage.getItem(key);
+      if(raw) {
+        const data = JSON.parse(raw);
+        const totalRegistros = (data.pagos || []).length + (data.gastos || []).length;
+        if(totalRegistros > mejorTotal) { mejorTotal = totalRegistros; mejorData = data; mejorKey = key; }
+      }
+    } catch(e) {}
+  }
+  if(mejorData) {
+    pagos = (mejorData.pagos || []).map(p => ({...p, concepto: limpiarTexto(p.concepto), descripcion: limpiarTexto(p.descripcion || '')}));
+    gastos = (mejorData.gastos || []).map(g => ({...g, categoria: limpiarTexto(g.categoria), banco: limpiarTexto(g.banco) || "Cash", usuario: limpiarTexto(g.usuario), destino: limpiarTexto(g.destino), descripcion: limpiarTexto(g.descripcion || '')}));
+    if(mejorData.config) {
+      if(mejorData.config.bancos) config.bancos = mejorData.config.bancos.map(limpiarTexto);
+      if(mejorData.config.categorias) config.categorias = mejorData.config.categorias.map(limpiarTexto);
+      if(mejorData.config.destinos) config.destinos = mejorData.config.destinos.map(limpiarTexto);
+    }
+    console.log(`✅ Cargado de "${mejorKey}": ${pagos.length} pagos, ${gastos.length} gastos`);
+  }
+})();
+
+function normalizarTexto(txt) {
+  return limpiarTexto(txt).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function coincide(valorGuardado, valorFiltro) {
+  if(!valorFiltro) return true;
+  const a = normalizarTexto(valorGuardado);
+  const b = normalizarTexto(valorFiltro);
+  if(!a || !b) return a === b;
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+const tabs = {
+  'pagos': document.getElementById('pagos'),
+  'gastos': document.getElementById('gastos'),
+  'resumen': document.getElementById('resumen'),
+  'vista': document.getElementById('vista'),
+  'taxes': document.getElementById('taxes'),
+  'config': document.getElementById('config')
+};
+
+function abrir(nombre){ 
+  Object.values(tabs).forEach(t=>t.style.display='none'); 
+  tabs[nombre].style.display='block'; 
+  document.getElementById('barraVolver').style.display = 'flex';
+  document.getElementById('tituloSeccion').textContent = titulosSecciones[nombre] || '';
+  seccionActual = nombre;
+  
+  if(nombre==='resumen') { actualizarSelectAnios(); actualizarGrafico(); }
+  if(nombre==='vista') { actualizarSelectAnios(); generarVista(); }
+  if(nombre==='taxes') { actualizarSelectAnios(); generarReporteTaxes(); }
+  if(nombre==='config') { renderConfiguracion(); }
+}
+
+function volverAlMenu() {
+  Object.values(tabs).forEach(t=>t.style.display='none'); 
+  document.getElementById('barraVolver').style.display = 'none';
+  seccionActual = 'menu';
+}
+
+function abrirSelectorSalva() {
+  document.getElementById('modalSalva').style.display = 'flex';
+  document.getElementById('resultadoBusquedaSalva').innerHTML = '';
+}
+
+function cerrarModalSalva() {
+  document.getElementById('modalSalva').style.display = 'none';
+}
+
+function seleccionarCarpetaSalva() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.webkitdirectory = true;
+  input.directory = true;
+  input.multiple = true;
+  
+  input.onchange = (e) => {
+    const files = Array.from(e.target.files);
+    const jsonFiles = files.filter(f => f.name.startsWith('Backup_PagosGastos_') && f.name.endsWith('.json'));
+    if(jsonFiles.length === 0) {
+      document.getElementById('resultadoBusquedaSalva').innerHTML = 
+        '<div style="color:#f44336;text-align:center;padding:15px;background:#ffebee;border-radius:8px;">❌ No se encontraron archivos Backup_PagosGastos_*.json</div>';
+      return;
+    }
+    jsonFiles.sort((a, b) => b.name.localeCompare(a.name));
+    const masReciente = jsonFiles[0];
+    
+    let html = '<h4 style="color:#2e7d32;">📋 Archivos encontrados (' + jsonFiles.length + '):</h4>';
+    html += '<div style="max-height:200px;overflow-y:auto;background:#f8f9fa;padding:10px;border-radius:6px;margin:10px 0;">';
+    jsonFiles.slice(0, 20).forEach((f, i) => {
+      const esMasReciente = i === 0;
+      html += '<div style="padding:8px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-family:monospace;font-size:12px;">' + (esMasReciente ? '⭐ ' : '') + f.name + '</span>';
+      html += '<button onclick="cargarArchivoSalva(\'' + f.name + '\')" style="background:' + (esMasReciente ? '#2e7d32' : '#2196F3') + ';color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:12px;">Cargar</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '<div style="background:#e8f5e8;padding:15px;border-radius:8px;border-left:5px solid #2e7d32;margin-top:15px;">';
+    html += '<p style="margin:0;"><strong>⭐ Más reciente:</strong></p>';
+    html += '<p style="margin:5px 0;font-family:monospace;font-size:13px;">' + masReciente.name + '</p>';
+    html += '<button onclick="cargarArchivoSalva(\'' + masReciente.name + '\')" style="background:#2e7d32;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:bold;margin-top:10px;font-size:14px;">📥 Cargar este archivo</button>';
+    html += '</div>';
+    
+    document.getElementById('resultadoBusquedaSalva').innerHTML = html;
+    window._archivosSalvaTemp = jsonFiles;
+  };
+  input.click();
+}
+
+function cargarArchivoSalva(nombreArchivo) {
+  const archivos = window._archivosSalvaTemp || [];
+  const archivo = archivos.find(f => f.name === nombreArchivo);
+  if(!archivo) { alert('❌ No se encontró'); return; }
+  
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      pagos = (data.pagos || []).map(p => ({...p, concepto: limpiarTexto(p.concepto), descripcion: limpiarTexto(p.descripcion || '')}));
+      gastos = (data.gastos || []).map(g => ({...g, categoria: limpiarTexto(g.categoria), banco: limpiarTexto(g.banco) || "Cash", usuario: limpiarTexto(g.usuario), destino: limpiarTexto(g.destino), descripcion: limpiarTexto(g.descripcion || '')}));
+      
+      if(data.config) {
+        config = data.config;
+        config.bancos = (config.bancos || CONFIG_DEFAULT.bancos).map(limpiarTexto);
+        config.categorias = (config.categorias || CONFIG_DEFAULT.categorias).map(limpiarTexto);
+        config.destinos = (config.destinos || CONFIG_DEFAULT.destinos).map(limpiarTexto);
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      }
+      
+      guardarLocal();
+      localStorage.setItem(ULTIMA_SALVA_KEY, nombreArchivo);
+      actualizarBarraSalva(nombreArchivo, archivo.lastModified);
+      
+      actualizarSelectoresFormulario();
+      actualizarSelectoresFiltro();
+      renderConfiguracion();
+      renderTabla('pagos');
+      renderTabla('gastos');
+      actualizarSelectAnios();
+      actualizarResumen();
+      cerrarModalSalva();
+      
+      document.getElementById('infoAlerta').style.display = 'none';
+      const info = document.getElementById('infoCarga');
+      info.style.display = 'block';
+      info.innerHTML = `✅ <strong>Datos cargados:</strong> ${pagos.length} pagos y ${gastos.length} gastos`;
+      setTimeout(() => { info.style.display = 'none'; }, 6000);
+      
+      if (seccionActual === 'vista') generarVista();
+    } catch(err) { alert('❌ Error: ' + err.message); }
+  };
+  reader.readAsText(archivo);
+}
+
+function actualizarBarraSalva(nombreArchivo, fechaTimestamp) {
+  const info = document.getElementById('infoSalvaHeader');
+  if(nombreArchivo) {
+    let texto = `📂 ${nombreArchivo}`;
+    if(fechaTimestamp) {
+      const fecha = new Date(fechaTimestamp);
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const anio = String(fecha.getFullYear()).slice(-2);
+      const hora = String(fecha.getHours()).padStart(2, '0');
+      const min = String(fecha.getMinutes()).padStart(2, '0');
+      texto = `📂 ${dia}/${mes}/${anio} ${hora}:${min}`;
+    }
+    info.textContent = texto;
+    info.title = nombreArchivo;
+  } else { info.textContent = '📂 Sin datos cargados'; }
+}
+
+function cargarConfiguracion() {
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if(raw) {
+      const cfg = JSON.parse(raw);
+      if(cfg.bancos) config.bancos = cfg.bancos.map(limpiarTexto).filter(b => b);
+      if(cfg.categorias) config.categorias = cfg.categorias.map(limpiarTexto).filter(c => c);
+      if(cfg.destinos) config.destinos = cfg.destinos.map(limpiarTexto).filter(d => d);
+    }
+  } catch(e) {}
+}
+
+function guardarConfiguracion() {
+  try {
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    actualizarSelectoresFormulario();
+    actualizarSelectoresFiltro();
+    alert('✅ Configuración guardada');
+  } catch(e) { alert('❌ Error: ' + e.message); }
+}
+
+function restaurarConfigDefault() {
+  if(!confirm('¿Restaurar la configuración por defecto?')) return;
+  config = JSON.parse(JSON.stringify(CONFIG_DEFAULT));
+  guardarConfiguracion();
+  renderConfiguracion();
+  alert('✅ Configuración restaurada');
+}
+
+function agregarItemConfig(tipo) {
+  const inputId = tipo === 'bancos' ? 'nuevoBanco' : tipo === 'categorias' ? 'nuevaCategoria' : 'nuevoDestino';
+  const input = document.getElementById(inputId);
+  const valor = limpiarTexto(input.value);
+  if(!valor) { alert('⚠️ Ingresa un nombre'); input.focus(); return; }
+  if(config[tipo].some(item => normalizarTexto(item) === normalizarTexto(valor))) { alert('⚠️ Ya existe'); return; }
+  config[tipo].push(valor);
+  input.value = '';
+  input.focus();
+  guardarConfiguracion();
+  renderConfiguracion();
+}
+
+function eliminarItemConfig(tipo, index) {
+  const nombres = {bancos: 'banco', categorias: 'categoría', destinos: 'proveedor'};
+  if(!confirm(`¿Eliminar el ${nombres[tipo]} "${config[tipo][index]}"?`)) return;
+  config[tipo].splice(index, 1);
+  guardarConfiguracion();
+  renderConfiguracion();
+}
+
+function renderConfiguracion() {
+  const listaBancos = document.getElementById('listaBancos');
+  listaBancos.innerHTML = config.bancos.map((b, i) => `<div class="config-item"><span>🏦 ${b}</span><button onclick="eliminarItemConfig('bancos', ${i})">🗑️</button></div>`).join('') || '<div style="padding:15px;text-align:center;color:#999">Sin bancos</div>';
+  const listaCategorias = document.getElementById('listaCategorias');
+  listaCategorias.innerHTML = config.categorias.map((c, i) => `<div class="config-item"><span>📁 ${c}</span><button onclick="eliminarItemConfig('categorias', ${i})">🗑️</button></div>`).join('') || '<div style="padding:15px;text-align:center;color:#999">Sin categorías</div>';
+  const listaDestinos = document.getElementById('listaDestinos');
+  listaDestinos.innerHTML = config.destinos.map((d, i) => `<div class="config-item"><span>🎯 ${d}</span><button onclick="eliminarItemConfig('destinos', ${i})">🗑️</button></div>`).join('') || '<div style="padding:15px;text-align:center;color:#999">Sin proveedores</div>';
+}
+
+function actualizarSelectoresFormulario() {
+  const selCategoria = document.getElementById('categoriaGasto');
+  const valCat = selCategoria.value;
+  selCategoria.innerHTML = config.categorias.map(c => `<option>${c}</option>`).join('');
+  if(valCat && config.categorias.includes(valCat)) selCategoria.value = valCat;
+  
+  const selBanco = document.getElementById('bancoGasto');
+  const valBanco = selBanco.value;
+  selBanco.innerHTML = config.bancos.map(b => `<option>${b}</option>`).join('');
+  if(valBanco && config.bancos.includes(valBanco)) selBanco.value = valBanco;
+  
+  const selDestino = document.getElementById('destinoGasto');
+  const valDest = selDestino.value;
+  const proveedoresLimpios = config.destinos.map(d => (d || '').trim()).filter(d => d.length > 0 && d.length <= 30);
+  selDestino.innerHTML = proveedoresLimpios.map(d => `<option>${d}</option>`).join('');
+  if(valDest && proveedoresLimpios.includes(valDest)) selDestino.value = valDest;
+}
+
+function actualizarSelectoresFiltro() {
+  const selFiltroCat = document.getElementById('filtroGasto');
+  const valFC = selFiltroCat.value;
+  selFiltroCat.innerHTML = '<option value="">Todas las categorías</option>' + config.categorias.map(c => `<option>${c}</option>`).join('');
+  if(valFC && config.categorias.includes(valFC)) selFiltroCat.value = valFC;
+  
+  const selFiltroBanco = document.getElementById('filtroBanco');
+  const valFB = selFiltroBanco.value;
+  selFiltroBanco.innerHTML = '<option value="">Todos los Bancos</option>' + config.bancos.map(b => `<option>${b}</option>`).join('');
+  if(valFB && config.bancos.includes(valFB)) selFiltroBanco.value = valFB;
+  
+  const selFiltroDestino = document.getElementById('filtroDestino');
+  const valFD = selFiltroDestino.value;
+  const proveedoresLimpios = config.destinos.map(d => (d || '').trim()).filter(d => d.length > 0 && d.length <= 30);
+  selFiltroDestino.innerHTML = '<option value="">Todos los Proveedores</option>' + proveedoresLimpios.map(d => `<option>${d}</option>`).join('');
+  if(valFD && proveedoresLimpios.includes(valFD)) selFiltroDestino.value = valFD;
+}
+
+function limpiarProveedores() {
+  if(!confirm('¿Limpiar nombres de proveedores?')) return;
+  const proveedoresConocidos = ['Amazon', 'Temu', 'AliExpress', 'Shein', 'eBay', 'Walmart', 'CubaMax Yadi', 'CubaMax', 'RapiCargo', 'TMovil', 'General', 'Miami', 'Habana', 'Zelle', 'Venmo', 'PayPal', 'Cash App'];
+  let corregidos = 0;
+  gastos.forEach(g => {
+    const destinoOriginal = (g.destino || '').trim();
+    if(!destinoOriginal) return;
+    let proveedorEncontrado = null;
+    const proveedoresOrdenados = [...proveedoresConocidos].sort((a, b) => b.length - a.length);
+    for(const prov of proveedoresOrdenados) {
+      if(destinoOriginal.toLowerCase().includes(prov.toLowerCase())) { proveedorEncontrado = prov; break; }
+    }
+    if(proveedorEncontrado && proveedorEncontrado !== destinoOriginal) { g.destino = proveedorEncontrado; corregidos++; }
+    else if(!proveedorEncontrado && destinoOriginal.length > 25) {
+      const palabras = destinoOriginal.split(' ').filter(p => p.length > 2);
+      if(palabras.length > 0) { g.destino = palabras[0] + (palabras[1] && palabras[1].length > 2 ? ' ' + palabras[1] : ''); corregidos++; }
+    }
+  });
+  if(corregidos > 0) {
+    guardarLocal();
+    renderTabla('gastos');
+    actualizarSelectoresFormulario();
+    actualizarSelectoresFiltro();
+    alert(`✅ Corregidos ${corregidos} gastos.`);
+  } else { alert('✅ Sin cambios.'); }
+}
+
+function diagnosticoDestinos() {
+  const destinosUnicos = {};
+  gastos.forEach(g => {
+    const d = g.destino || '(vacío)';
+    const dRepr = JSON.stringify(d);
+    if(!destinosUnicos[dRepr]) destinosUnicos[dRepr] = 0;
+    destinosUnicos[dRepr]++;
+  });
+  let msg = '🔍 DIAGNÓSTICO:\n\n';
+  msg += 'Total gastos: ' + gastos.length + '\n\n';
+  msg += 'En Config:\n';
+  config.destinos.forEach(d => { msg += '  • "' + d + '"\n'; });
+  msg += '\nEn datos:\n';
+  Object.keys(destinosUnicos).forEach(k => { msg += '  ' + k + ' → ' + destinosUnicos[k] + '\n'; });
+  alert(msg);
+}
+
+function diagnosticoStorage() {
+  let msg = '💾 STORAGE:\n\n';
+  Object.entries(STORAGE_KEYS).forEach(([nombre, key]) => {
+    const val = localStorage.getItem(key);
+    if(val) {
+      try {
+        const data = JSON.parse(val);
+        msg += `✅ ${nombre}: ${(data.pagos||[]).length} pagos, ${(data.gastos||[]).length} gastos\n\n`;
+      } catch(e) { msg += `⚠️ ${nombre}: error\n\n`; }
+    } else { msg += `❌ ${nombre}: vacío\n\n`; }
+  });
+  const ultimaSalva = localStorage.getItem(ULTIMA_SALVA_KEY);
+  msg += `📂 Última salva: ${ultimaSalva || 'Ninguna'}\n\n`;
+  msg += `📊 MEMORIA: ${pagos.length} pagos, ${gastos.length} gastos`;
+  alert(msg);
+}
+
+function repararDatosAntiguos() {
+  let sinDestino = 0, sinDescPago = 0;
+  gastos.forEach(g => {
+    if(!g.destino || !g.destino.trim()) {
+      if(config.destinos.length > 0) { g.destino = config.destinos[0]; sinDestino++; }
+    }
+    if(g.descripcion === undefined) g.descripcion = '';
+  });
+  pagos.forEach(p => {
+    if(p.descripcion === undefined) { p.descripcion = ''; sinDescPago++; }
+  });
+  if(sinDestino > 0 || sinDescPago > 0) {
+    guardarLocal();
+    renderTabla('pagos');
+    renderTabla('gastos');
+    actualizarSelectoresFormulario();
+    actualizarSelectoresFiltro();
+    alert(`✅ Reparados:\n- ${sinDestino} gastos sin proveedor\n- ${sinDescPago} pagos sin descripción`);
+  } else { alert('✅ Sin problemas.'); }
+}
+
+function limpiarCaracteresExtraños() {
+  if(!confirm('¿Limpiar caracteres extraños?')) return;
+  let corregidos = 0;
+  pagos.forEach(p => {
+    const limpio = limpiarTexto(p.concepto);
+    const descLimpia = limpiarTexto(p.descripcion || '');
+    if(limpio !== p.concepto) { p.concepto = limpio; corregidos++; }
+    if(descLimpia !== (p.descripcion || '')) { p.descripcion = descLimpia; corregidos++; }
+  });
+  gastos.forEach(g => {
+    let cambio = false;
+    const cat = limpiarTexto(g.categoria);
+    const ban = limpiarTexto(g.banco);
+    const des = limpiarTexto(g.destino);
+    const usr = limpiarTexto(g.usuario);
+    const desc = limpiarTexto(g.descripcion || '');
+    if(cat !== g.categoria) { g.categoria = cat; cambio = true; }
+    if(ban !== g.banco) { g.banco = ban; cambio = true; }
+    if(des !== g.destino) { g.destino = des; cambio = true; }
+    if(usr !== g.usuario) { g.usuario = usr; cambio = true; }
+    if(desc !== (g.descripcion || '')) { g.descripcion = desc; cambio = true; }
+    if(cambio) corregidos++;
+  });
+  if(corregidos > 0) {
+    guardarLocal();
+    renderTabla('pagos');
+    renderTabla('gastos');
+    actualizarSelectoresFormulario();
+    actualizarSelectoresFiltro();
+    alert(`✅ Corregidos ${corregidos} registros.`);
+  } else { alert('✅ Sin caracteres extraños.'); }
+}
+
+function configurarNavegacionEnter() {
+  const fechaPago = document.getElementById('fechaPago');
+  const montoPago = document.getElementById('montoPago');
+  const conceptoPago = document.getElementById('conceptoPago');
+  const descripcionPago = document.getElementById('descripcionPago');
+  const taxFITW = document.getElementById('taxFITW');
+  const taxMED = document.getElementById('taxMED');
+  const taxSS = document.getElementById('taxSS');
+  fechaPago.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); montoPago.focus(); } });
+  montoPago.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); conceptoPago.focus(); } });
+  conceptoPago.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); descripcionPago.focus(); } });
+  descripcionPago.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); if(conceptoPago.value==='Sueldo') { taxFITW.focus(); } else { agregarPago(); } } });
+  taxFITW.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); taxMED.focus(); } });
+  taxMED.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); taxSS.focus(); } });
+  taxSS.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); agregarPago(); } });
+
+  const fechaGasto = document.getElementById('fechaGasto');
+  const montoGasto = document.getElementById('montoGasto');
+  const categoriaGasto = document.getElementById('categoriaGasto');
+  const bancoGasto = document.getElementById('bancoGasto');
+  const usuarioGasto = document.getElementById('usuarioGasto');
+  const destinoGasto = document.getElementById('destinoGasto');
+  const descripcionGasto = document.getElementById('descripcionGasto');
+  fechaGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); montoGasto.focus(); } });
+  montoGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); categoriaGasto.focus(); } });
+  categoriaGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); bancoGasto.focus(); } });
+  bancoGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); usuarioGasto.focus(); } });
+  usuarioGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); destinoGasto.focus(); } });
+  destinoGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); descripcionGasto.focus(); } });
+  descripcionGasto.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); agregarGasto(); } });
+  
+  document.getElementById('nuevoBanco').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); agregarItemConfig('bancos'); } });
+  document.getElementById('nuevaCategoria').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); agregarItemConfig('categorias'); } });
+  document.getElementById('nuevoDestino').addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); agregarItemConfig('destinos'); } });
+}
+
+function getNombreMes(numMes) {
+  const meses = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+  return meses[numMes] || '';
+}
+
+function leerFiltrosPagos() {
+  filtrosPagos.concepto = document.getElementById('filtroPago').value;
+  filtrosPagos.anio = document.getElementById('filtroAnioPago').value;
+  filtrosPagos.mes = document.getElementById('filtroMesPago').value;
+  filtrosPagos.descripcion = document.getElementById('filtroDescripcionPago').value.trim();
+}
+
+function leerFiltrosGastos() {
+  filtrosGastos.categoria = document.getElementById('filtroGasto').value;
+  filtrosGastos.banco = document.getElementById('filtroBanco').value;
+  filtrosGastos.destino = document.getElementById('filtroDestino').value;
+  filtrosGastos.destinoLibre = document.getElementById('filtroDestinoLibre').value.trim();
+  filtrosGastos.usuario = document.getElementById('filtroUsuario').value.trim();
+  filtrosGastos.descripcion = document.getElementById('filtroDescripcion').value.trim();
+  filtrosGastos.anio = document.getElementById('filtroAnioGasto').value;
+  filtrosGastos.mes = document.getElementById('filtroMesGasto').value;
+}
+
+function actualizarBadges() {
+  const badgeP = document.getElementById('badgePagos');
+  if(badgeP) {
+    const filtrosP = Object.values(filtrosPagos).filter(v => v && v !== '').length;
+    if(filtrosP > 0) { badgeP.style.display = 'inline-block'; badgeP.textContent = filtrosP; }
+    else { badgeP.style.display = 'none'; }
+  }
+  const badgeG = document.getElementById('badgeGastos');
+  if(badgeG) {
+    const filtrosG = Object.values(filtrosGastos).filter(v => v && v !== '').length;
+    if(filtrosG > 0) { badgeG.style.display = 'inline-block'; badgeG.textContent = filtrosG; }
+    else { badgeG.style.display = 'none'; }
+  }
+}
+
+function abrirSelectorReporte() {
+  const sel = document.getElementById('selectorAnioReporte');
+  const anios = obtenerAniosDisponibles();
+  const valorActual = sel.value;
+  sel.innerHTML = '<option value="">Todos los años</option>';
+  anios.forEach(a => { sel.innerHTML += `<option value="${a}">${a}</option>`; });
+  if(valorActual && anios.includes(valorActual)) sel.value = valorActual;
+  document.getElementById('modalSelectorReporte').style.display = 'flex';
+}
+
+function cerrarSelectorReporte() {
+  document.getElementById('modalSelectorReporte').style.display = 'none';
+}
+
+function generarReporteDesdeSelector() {
+  const anio = document.getElementById('selectorAnioReporte').value;
+  const mes = document.getElementById('selectorMesReporte').value;
+  const tipo = document.getElementById('selectorTipoReporte').value;
+  cerrarSelectorReporte();
+  mostrarModalReporte(anio, mes, tipo);
+}
+
+function mostrarModalReporte(anioFiltro, mesFiltro, tipo = 'vista') {
+  if (anioFiltro === undefined || anioFiltro === null) {
+    anioFiltro = document.getElementById('filtroAnioVista').value;
+    mesFiltro = document.getElementById('filtroMesVista').value;
+    tipo = 'vista';
+  }
+  anioFiltro = String(anioFiltro || '');
+  mesFiltro = String(mesFiltro || '');
+  leerFiltrosPagos();
+  leerFiltrosGastos();
+  
+  let pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
+  if(tipo === 'pagos') {
+    pagosFiltrados = pagosFiltrados.filter(p => {
+      if(filtrosPagos.concepto && !coincide(p.concepto, filtrosPagos.concepto)) return false;
+      if(filtrosPagos.descripcion && !normalizarTexto(p.descripcion).includes(normalizarTexto(filtrosPagos.descripcion))) return false;
+      return true;
+    });
+  }
+  
+  let gastosFiltrados = gastos.filter(g => aplicarFiltroFecha(g, anioFiltro, mesFiltro));
+  if(tipo === 'gastos') {
+    gastosFiltrados = gastosFiltrados.filter(g => {
+      if(filtrosGastos.categoria && !coincide(g.categoria, filtrosGastos.categoria)) return false;
+      if(filtrosGastos.banco && !coincide(g.banco, filtrosGastos.banco)) return false;
+      if(filtrosGastos.destino && !coincide(g.destino, filtrosGastos.destino)) return false;
+      if(filtrosGastos.destinoLibre && !normalizarTexto(g.destino).includes(normalizarTexto(filtrosGastos.destinoLibre))) return false;
+      if(filtrosGastos.usuario && !normalizarTexto(g.usuario).includes(normalizarTexto(filtrosGastos.usuario))) return false;
+      if(filtrosGastos.descripcion && !normalizarTexto(g.descripcion).includes(normalizarTexto(filtrosGastos.descripcion))) return false;
+      return true;
+    });
+  }
+  
+  const totalPagos = pagosFiltrados.reduce((s,p)=>s+p.monto,0);
+  const totalGastos = gastosFiltrados.reduce((s,g)=>s+g.monto,0);
+  const balance = totalPagos - totalGastos;
+  
+  let totalFITW=0, totalMED=0, totalSS=0;
+  pagosFiltrados.forEach(p => {
+    if(p.taxes) { totalFITW += p.taxes.FITW || 0; totalMED += p.taxes.MED || 0; totalSS += p.taxes.SS || 0; }
+  });
+  
+  let detalles = [];
+  if (anioFiltro) detalles.push(`Año: ${anioFiltro}`);
+  if (mesFiltro) detalles.push(`Mes: ${getNombreMes(mesFiltro)}`);
+  if (tipo === 'gastos') {
+    if(filtrosGastos.categoria) detalles.push(`Cat: ${filtrosGastos.categoria}`);
+    if(filtrosGastos.banco) detalles.push(`Banco: ${filtrosGastos.banco}`);
+    if(filtrosGastos.destino) detalles.push(`Prov: ${filtrosGastos.destino}`);
+    if(filtrosGastos.destinoLibre) detalles.push(`Buscar: ${filtrosGastos.destinoLibre}`);
+    if(filtrosGastos.usuario) detalles.push(`Usuario: ${filtrosGastos.usuario}`);
+    if(filtrosGastos.descripcion) detalles.push(`Desc: ${filtrosGastos.descripcion}`);
+  }
+  if (tipo === 'pagos') {
+    if(filtrosPagos.concepto) detalles.push(`Concepto: ${filtrosPagos.concepto}`);
+    if(filtrosPagos.descripcion) detalles.push(`Desc: ${filtrosPagos.descripcion}`);
+  }
+  
+  let titulo = detalles.length > 0 ? 'Reporte - ' + detalles.join(' | ') : 'Reporte - Todos los registros';
+  let infoTipo = '';
+  if (tipo === 'pagos') infoTipo = '🔵 Filtro: Pagos';
+  else if (tipo === 'gastos') infoTipo = '🔴 Filtro: Gastos';
+  else if (tipo === 'vista') infoTipo = '🟢 Filtro: Vista Previa';
+  else infoTipo = '⚪ Reporte completo';
+  
+  let html = `<div style="text-align:center;margin-bottom:20px">
+    ${logoEmpresa ? `<img src="${logoEmpresa}" style="max-height:60px;border-radius:8px;margin-bottom:10px;">` : ''}
+    <h2 style="color:#2e7d32;margin-bottom:5px">${titulo}</h2>
+    <p style="color:#2196F3;font-weight:bold;font-size:14px;margin:5px 0">${infoTipo}</p>
+    <p style="color:#666;font-size:13px">Generado el ${hoyDDMMYYYY()} a las ${horaHHMMSS()}</p>
+  </div>`;
+  
+  const claseSaldo = balance >= 0 ? 'saldo-positivo' : 'saldo-negativo';
+  html += `<div class="saldo-final ${claseSaldo}">
+    <h3>💰 BALANCE FINAL DEL PERÍODO</h3>
+    <div class="monto">$${balance.toFixed(2)}</div>
+    <div class="detalle">Ingresos: $${totalPagos.toFixed(2)} &nbsp; | &nbsp; Gastos: $${totalGastos.toFixed(2)}</div>
+  </div>`;
+  
+  if (totalFITW + totalMED + totalSS > 0) {
+    html += `<div class="taxes-detail">
+      <h4>Resumen de Taxes</h4>
+      <div class="tax-item" style="color:#2196F3">FITW: $${totalFITW.toFixed(2)}</div>
+      <div class="tax-item" style="color:#FF9800">MED: $${totalMED.toFixed(2)}</div>
+      <div class="tax-item" style="color:#F44336">SS: $${totalSS.toFixed(2)}</div>
+      <div class="tax-item" style="color:#2e7d32"><strong>Total: $${(totalFITW+totalMED+totalSS).toFixed(2)}</strong></div>
+    </div>`;
+  }
+  
+  html += `<h3 style="color:#2e7d32;margin-top:20px">💰 Pagos (${pagosFiltrados.length})</h3>`;
+  html += '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#2e7d32;color:#fff">';
+  html += '<th>#</th><th>Fecha Hora</th><th>Concepto</th><th>Descripción</th><th>Monto</th><th>FITW</th><th>MED</th><th>SS</th><th>Neto</th></tr></thead><tbody>';
+  if (pagosFiltrados.length === 0) {
+    html += '<tr><td colspan="9" style="padding:20px;color:#999">Sin pagos</td></tr>';
+  } else {
+    pagosFiltrados.forEach((p,i) => {
+      const fitw = p.taxes?.FITW || 0;
+      const med = p.taxes?.MED || 0;
+      const ss = p.taxes?.SS || 0;
+      const neto = p.monto - (fitw + med + ss);
+      html += `<tr><td>${i+1}</td><td>${p.fecha} ${p.hora || ''}</td><td>${p.concepto}</td><td>${p.descripcion || ''}</td><td>${p.monto.toFixed(2)}</td><td>${fitw.toFixed(2)}</td><td>${med.toFixed(2)}</td><td>${ss.toFixed(2)}</td><td><strong>${neto.toFixed(2)}</strong></td></tr>`;
+    });
+    html += `<tr class="total-row"><td colspan="4"><strong>TOTAL</strong></td><td><strong>$${totalPagos.toFixed(2)}</strong></td><td><strong>$${totalFITW.toFixed(2)}</strong></td><td><strong>$${totalMED.toFixed(2)}</strong></td><td><strong>$${totalSS.toFixed(2)}</strong></td><td><strong>$${(totalPagos - totalFITW - totalMED - totalSS).toFixed(2)}</strong></td></tr>`;
+  }
+  html += '</tbody></table>';
+  
+  html += `<h3 style="color:#f44336;margin-top:20px">💳 Gastos (${gastosFiltrados.length})</h3>`;
+  html += '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f44336;color:#fff">';
+  html += '<th>#</th><th>Fecha Hora</th><th>Categoría</th><th>Banco</th><th>Usuario</th><th>Proveedor/Agencia</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>';
+  if (gastosFiltrados.length === 0) {
+    html += '<tr><td colspan="8" style="padding:20px;color:#999">Sin gastos</td></tr>';
+  } else {
+    gastosFiltrados.forEach((g,i) => {
+      html += `<tr><td>${i+1}</td><td>${g.fecha} ${g.hora || ''}</td><td>${g.categoria}</td><td>${g.banco || ''}</td><td>${g.usuario || ''}</td><td>${g.destino || ''}</td><td>${g.descripcion || ''}</td><td><strong>${g.monto.toFixed(2)}</strong></td></tr>`;
+    });
+    html += `<tr class="total-row" style="background:#ffe8e8"><td colspan="7"><strong>TOTAL</strong></td><td><strong>$${totalGastos.toFixed(2)}</strong></td></tr>`;
+  }
+  html += '</tbody></table>';
+  
+  html += `<div style="margin-top:30px;padding:20px;background:#f8f9fa;border-radius:10px;border-left:5px solid #2196F3">
+    <h3 style="margin-top:0;color:#1976D2">📊 Resumen Final</h3>
+    <table style="width:100%;border-collapse:collapse">
+      <tr style="background:#e3f2fd"><td style="padding:10px;text-align:left"><strong>Total Ingresos:</strong></td><td style="padding:10px;text-align:right">$${totalPagos.toFixed(2)}</td></tr>
+      <tr><td style="padding:10px;text-align:left">Total Taxes:</td><td style="padding:10px;text-align:right;color:#f44336">-$${(totalFITW+totalMED+totalSS).toFixed(2)}</td></tr>
+      <tr style="background:#e8f5e8"><td style="padding:10px;text-align:left"><strong>Ingresos Neto:</strong></td><td style="padding:10px;text-align:right"><strong>$${(totalPagos - totalFITW - totalMED - totalSS).toFixed(2)}</strong></td></tr>
+      <tr style="background:#ffe8e8"><td style="padding:10px;text-align:left"><strong>Total Gastos:</strong></td><td style="padding:10px;text-align:right;color:#f44336"><strong>-$${totalGastos.toFixed(2)}</strong></td></tr>
+      <tr style="background:${balance >= 0 ? '#e8f5e8' : '#ffe8e8'};font-size:16px"><td style="padding:12px;text-align:left"><strong>BALANCE FINAL:</strong></td><td style="padding:12px;text-align:right;color:${balance >= 0 ? '#2e7d32' : '#f44336'}"><strong>$${balance.toFixed(2)}</strong></td></tr>
+    </table>
+  </div>`;
+  
+  window._ultimosGastosFiltrados = gastosFiltrados;
+  window._ultimosPagosFiltrados = pagosFiltrados;
+  document.getElementById('modalReporteContenido').innerHTML = html;
+  document.getElementById('modalReporte').style.display = 'block';
+}
+
+function cerrarModalReporte() {
+  document.getElementById('modalReporte').style.display = 'none';
+}
+
+function imprimirModalReporte() {
+  const contenido = document.getElementById('modalReporteContenido').innerHTML;
+  const ventana = window.open('', '_blank');
+  ventana.document.write(`<!DOCTYPE html><html><head><title>Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:8px;border:1px solid #ddd;text-align:center}th{background:#2e7d32;color:white}.total-row{background:#e8f5e8;font-weight:bold}.taxes-detail{background:#e8f5e8;padding:10px;margin:10px 0;border-radius:5px;border-left:3px solid #2e7d32}.tax-item{display:inline-block;margin-right:15px;font-weight:bold}.saldo-final{padding:20px;border-radius:10px;margin:20px 0;text-align:center;color:#fff}.saldo-positivo{background:#2e7d32}.saldo-negativo{background:#f44336}.saldo-final .monto{font-size:32px;font-weight:bold;margin:5px 0}.saldo-final .detalle{font-size:14px;opacity:0.9;margin-top:10px}</style></head><body>${contenido}</body></html>`);
+  ventana.document.close();
+  setTimeout(() => { ventana.print(); }, 500);
+}
+
+function exportarModalExcel() {
+  const pagosFiltrados = window._ultimosPagosFiltrados || [];
+  const gastosFiltrados = window._ultimosGastosFiltrados || [];
+  const wb = XLSX.utils.book_new();
+  const datosPagos = pagosFiltrados.map(p => ({'#': '', 'Fecha Hora': p.fecha+' '+(p.hora||''), 'Concepto': p.concepto, 'Descripción': p.descripcion || '', 'Monto': p.monto.toFixed(2), 'FITW': (p.taxes?.FITW || 0).toFixed(2), 'MED': (p.taxes?.MED || 0).toFixed(2), 'SS': (p.taxes?.SS || 0).toFixed(2), 'Neto': (p.monto - ((p.taxes?.FITW||0)+(p.taxes?.MED||0)+(p.taxes?.SS||0))).toFixed(2)}));
+  const totalPagos = pagosFiltrados.reduce((s,p)=>s+p.monto,0);
+  const totalFITW = pagosFiltrados.reduce((s,p)=>s+(p.taxes?.FITW||0),0);
+  const totalMED = pagosFiltrados.reduce((s,p)=>s+(p.taxes?.MED||0),0);
+  const totalSS = pagosFiltrados.reduce((s,p)=>s+(p.taxes?.SS||0),0);
+  datosPagos.push({'#': '', 'Fecha Hora': '', 'Concepto': 'TOTAL PAGOS', 'Descripción': '', 'Monto': totalPagos.toFixed(2), 'FITW': totalFITW.toFixed(2), 'MED': totalMED.toFixed(2), 'SS': totalSS.toFixed(2), 'Neto': (totalPagos - totalFITW - totalMED - totalSS).toFixed(2)});
+  const datosGastos = gastosFiltrados.map(g => ({'#': '', 'Fecha Hora': g.fecha+' '+(g.hora||''), 'Categoria': g.categoria, 'Banco': g.banco || '', 'Usuario': g.usuario || '', 'Proveedor/Agencia': g.destino || '', 'Descripción': g.descripcion || '', 'Monto': g.monto.toFixed(2)}));
+  const totalGastos = gastosFiltrados.reduce((s,g)=>s+g.monto,0);
+  datosGastos.push({'#': '', 'Fecha Hora': '', 'Categoria': 'TOTAL GASTOS', 'Banco': '', 'Usuario': '', 'Proveedor/Agencia': '', 'Descripción': '', 'Monto': totalGastos.toFixed(2)});
+  const balance = totalPagos - totalGastos;
+  const datosResumen = [
+    {'Concepto': 'Total Ingresos', 'Monto': totalPagos.toFixed(2)},
+    {'Concepto': 'Total FITW', 'Monto': totalFITW.toFixed(2)},
+    {'Concepto': 'Total MED', 'Monto': totalMED.toFixed(2)},
+    {'Concepto': 'Total SS', 'Monto': totalSS.toFixed(2)},
+    {'Concepto': 'Total Taxes', 'Monto': (totalFITW+totalMED+totalSS).toFixed(2)},
+    {'Concepto': 'Ingresos Neto', 'Monto': (totalPagos - totalFITW - totalMED - totalSS).toFixed(2)},
+    {'Concepto': 'Total Gastos', 'Monto': totalGastos.toFixed(2)},
+    {'Concepto': 'BALANCE FINAL', 'Monto': balance.toFixed(2)}
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosPagos), 'Pagos');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosGastos), 'Gastos');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosResumen), 'Resumen');
+  XLSX.writeFile(wb, `Reporte_Filtrado_V4.50_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+function exportarModalPDF() {
+  const pagosFiltrados = window._ultimosPagosFiltrados || [];
+  const gastosFiltrados = window._ultimosGastosFiltrados || [];
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt',format:'a4'});
+  const left=40; 
+  let y=40;
+  if(logoEmpresa) {
+    try { doc.addImage(logoEmpresa, 'PNG', left, y-10, 50, 50); doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left+60, y+10); }
+    catch(e) { doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left, y); }
+  } else { doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left, y); }
+  y+=40;
+  doc.setFillColor(46,125,50); 
+  doc.rect(left,y-10,520,20,'F'); 
+  doc.setTextColor(255,255,255); 
+  doc.setFontSize(10);
+  doc.text('Pagos', left+6, y+4);
+  y+=20;
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(8);
+  doc.text('#', left, y); doc.text('Fecha', left+25, y); doc.text('Concepto', left+95, y); doc.text('Descripción', left+175, y); doc.text('Monto', left+300, y); doc.text('FITW', left+360, y); doc.text('MED', left+405, y); doc.text('SS', left+445, y); doc.text('Neto', left+485, y);
+  y+=14;
+  let totalPagos=0, totalFITW=0, totalMED=0, totalSS=0;
+  pagosFiltrados.forEach((p,i)=>{
+    const fitw = p.taxes?.FITW || 0;
+    const med = p.taxes?.MED || 0;
+    const ss = p.taxes?.SS || 0;
+    doc.text(String(i+1), left, y); doc.text(p.fecha, left+25, y); doc.text((p.concepto || '').substring(0, 12), left+95, y); doc.text((p.descripcion || '').substring(0, 18), left+175, y); doc.text(p.monto.toFixed(2), left+300, y); doc.text(fitw.toFixed(2), left+360, y); doc.text(med.toFixed(2), left+405, y); doc.text(ss.toFixed(2), left+445, y); doc.text((p.monto-fitw-med-ss).toFixed(2), left+485, y);
+    totalPagos += p.monto; totalFITW += fitw; totalMED += med; totalSS += ss;
+    y+=12; if(y>760){ doc.addPage(); y=40; }
+  });
+  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL PAGOS', left+95, y); doc.text(totalPagos.toFixed(2), left+300, y); doc.setFont(undefined, 'normal');
+  y+=25;
+  doc.setFillColor(244,67,54); doc.rect(left,y-10,520,20,'F'); doc.setTextColor(255,255,255); doc.text('Gastos', left+6, y+4);
+  y+=20; doc.setTextColor(0,0,0);
+  doc.text('#', left, y); doc.text('Fecha', left+20, y); doc.text('Categoria', left+85, y); doc.text('Banco', left+155, y); doc.text('Usuario', left+220, y); doc.text('Proveedor', left+280, y); doc.text('Descripcion', left+360, y); doc.text('Monto', left+450, y);
+  y+=14;
+  let totalGastos = 0;
+  gastosFiltrados.forEach((g,i)=>{
+    doc.text(String(i+1), left, y); doc.text(g.fecha, left+20, y); doc.text((g.categoria || '').substring(0, 12), left+85, y); doc.text((g.banco || '').substring(0, 12), left+155, y); doc.text((g.usuario || '').substring(0, 10), left+220, y); doc.text((g.destino || '').substring(0, 13), left+280, y); doc.text((g.descripcion || '').substring(0, 15), left+360, y); doc.text(g.monto.toFixed(2), left+450, y);
+    totalGastos += g.monto;
+    y+=12; if(y>760){ doc.addPage(); y=40; }
+  });
+  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL GASTOS', left+100, y); doc.text(totalGastos.toFixed(2), left+450, y); doc.setFont(undefined, 'normal');
+  const balance = totalPagos - totalGastos;
+  y+=30;
+  doc.setFillColor(33,150,243); doc.rect(left,y-8,520,22,'F'); doc.setTextColor(255,255,255); doc.setFontSize(12); doc.text('BALANCE FINAL: $'+balance.toFixed(2), left+10, y+8);
+  doc.save(`Reporte_Filtrado_V4.50_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+function generarReporteTaxes(anioFiltro = '', mesFiltro = '') {
+  if (anioFiltro && typeof anioFiltro === 'object') anioFiltro = '';
+  if (mesFiltro && typeof mesFiltro === 'object') mesFiltro = '';
+  anioFiltro = String(anioFiltro || '');
+  mesFiltro = String(mesFiltro || '');
+  if (anioFiltro === '' && mesFiltro === '') {
+    anioFiltro = document.getElementById('filtroAnioTaxes').value;
+    mesFiltro = document.getElementById('filtroMesTaxes').value;
+  }
+  const pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
+  let totalFITW = 0, totalMED = 0, totalSS = 0, totalBruto = 0, totalNeto = 0;
+  pagosFiltrados.forEach(p => {
+    if (p.taxes) { totalFITW += p.taxes.FITW || 0; totalMED += p.taxes.MED || 0; totalSS += p.taxes.SS || 0; }
+    totalBruto += p.monto;
+    totalNeto += p.monto - ((p.taxes?.FITW || 0) + (p.taxes?.MED || 0) + (p.taxes?.SS || 0));
+  });
+  const totalTaxes = totalFITW + totalMED + totalSS;
+  let titulo = 'Reporte Detallado de Taxes - Todos los registros';
+  if (anioFiltro && mesFiltro) titulo = `Reporte Taxes - ${getNombreMes(mesFiltro)} ${anioFiltro}`;
+  else if (anioFiltro) titulo = `Reporte Taxes - Año ${anioFiltro}`;
+  else if (mesFiltro) titulo = `Reporte Taxes - ${getNombreMes(mesFiltro)}`;
+  let html = `<h3 style="color:#2e7d32">${titulo}</h3>`;
+  html += `<div class="taxes-detail"><h4>Resumen de Taxes</h4><div class="tax-item" style="color:#2196F3">FITW: $${totalFITW.toFixed(2)}</div><div class="tax-item" style="color:#FF9800">MED: $${totalMED.toFixed(2)}</div><div class="tax-item" style="color:#F44336">SS: $${totalSS.toFixed(2)}</div><div class="tax-item" style="color:#2e7d32"><strong>Total: $${totalTaxes.toFixed(2)}</strong></div></div>`;
+  html += `<div class="taxes-detail" style="background:#e3f2fd; border-left-color:#2196F3;"><h4>Resumen Financiero</h4><div class="tax-item">Total Bruto: $${totalBruto.toFixed(2)}</div><div class="tax-item">Total Neto: $${totalNeto.toFixed(2)}</div><div class="tax-item">Diferencia: $${(totalBruto - totalNeto).toFixed(2)}</div></div>`;
+  html += '<h4>Detalle por Pago</h4><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#2e7d32;color:#fff">';
+  html += '<th>#</th><th>Fecha</th><th>Concepto</th><th>Bruto</th><th>FITW</th><th>MED</th><th>SS</th><th>Total Taxes</th><th>Neto</th></tr></thead><tbody>';
+  pagosFiltrados.forEach((p,i) => {
+    const taxes = p.taxes || {FITW: 0, MED: 0, SS: 0};
+    const totalPagoTaxes = taxes.FITW + taxes.MED + taxes.SS;
+    const neto = p.monto - totalPagoTaxes;
+    html += `<tr><td>${i+1}</td><td>${p.fecha}</td><td>${p.concepto}</td><td>${p.monto.toFixed(2)}</td><td>${taxes.FITW.toFixed(2)}</td><td>${taxes.MED.toFixed(2)}</td><td>${taxes.SS.toFixed(2)}</td><td>${totalPagoTaxes.toFixed(2)}</td><td>${neto.toFixed(2)}</td></tr>`;
+  });
+  html += `<tr class="total-row"><td colspan="3"><strong>TOTALES</strong></td><td><strong>$${totalBruto.toFixed(2)}</strong></td><td><strong>$${totalFITW.toFixed(2)}</strong></td><td><strong>$${totalMED.toFixed(2)}</strong></td><td><strong>$${totalSS.toFixed(2)}</strong></td><td><strong>$${totalTaxes.toFixed(2)}</strong></td><td><strong>$${totalNeto.toFixed(2)}</strong></td></tr>`;
+  html += '</tbody></table>';
+  document.getElementById('taxesContenido').innerHTML = html;
+}
+
+function inicializarFiltrosTaxes() {
+  document.getElementById('btnAplicarFiltroTaxes').addEventListener('click', function() { generarReporteTaxes(document.getElementById('filtroAnioTaxes').value, document.getElementById('filtroMesTaxes').value); });
+  document.getElementById('btnLimpiarFiltroTaxes').addEventListener('click', function() { document.getElementById('filtroAnioTaxes').value = ''; document.getElementById('filtroMesTaxes').value = ''; generarReporteTaxes('', ''); });
+  document.getElementById('btnImprimirTaxes').addEventListener('click', function() { window.print(); });
+}
+
+document.getElementById('btnImprimirRapido').addEventListener('click', function() { window.print(); });
+
+function guardarLocal(){ 
+  try {
+    const datos = JSON.stringify({pagos, gastos, config});
+    const timestamp = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEYS.principal, datos);
+    localStorage.setItem(STORAGE_KEYS.version, datos);
+    localStorage.setItem(STORAGE_KEYS.autosave, datos);
+    localStorage.setItem(STORAGE_KEYS.ultimo, datos);
+    localStorage.setItem('pagos_gastos_lastSave', timestamp);
+  } catch(e) { console.warn('⚠️ Error guardando:', e); }
+}
+
+window.addEventListener('beforeunload', function() { guardarLocal(); });
+setInterval(guardarLocal, 30000);
+
+window.onload=function(){ 
+  console.log('📥 Inicializando UI V4.50...');
+  mostrarLogo();
+  cargarConfiguracion();
+  actualizarSelectoresFormulario();
+  actualizarSelectoresFiltro();
+  
+  document.getElementById('fechaPago').value=hoyDDMMYYYY(); 
+  document.getElementById('fechaGasto').value=hoyDDMMYYYY(); 
+  
+  abrir('resumen');
+  toggleTaxesVisibility(); 
+  configurarNavegacionEnter();
+  
+  const ultimaSalva = localStorage.getItem(ULTIMA_SALVA_KEY);
+  if(ultimaSalva) { actualizarBarraSalva(ultimaSalva, null); }
+  
+  document.getElementById('filtroPago').addEventListener('change', ()=>{ leerFiltrosPagos(); renderTabla('pagos'); actualizarBadges(); });
+  document.getElementById('filtroAnioPago').addEventListener('change', ()=>{ leerFiltrosPagos(); renderTabla('pagos'); actualizarBadges(); });
+  document.getElementById('filtroMesPago').addEventListener('change', ()=>{ leerFiltrosPagos(); renderTabla('pagos'); actualizarBadges(); });
+  document.getElementById('filtroDescripcionPago').addEventListener('input', ()=>{ leerFiltrosPagos(); renderTabla('pagos'); actualizarBadges(); });
+  document.getElementById('btnAplicarFiltroPago').addEventListener('click', ()=>{ leerFiltrosPagos(); renderTabla('pagos'); actualizarBadges(); });
+  document.getElementById('btnLimpiarFiltroPago').addEventListener('click', function() {
+    filtrosPagos = {concepto:'', anio:'', mes:'', descripcion:''};
+    document.getElementById('filtroPago').value = '';
+    document.getElementById('filtroAnioPago').value = '';
+    document.getElementById('filtroMesPago').value = '';
+    document.getElementById('filtroDescripcionPago').value = '';
+    renderTabla('pagos');
+    actualizarBadges();
+  });
+  
+  document.getElementById('filtroGasto').addEventListener('change', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroBanco').addEventListener('change', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroDestino').addEventListener('change', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroDestinoLibre').addEventListener('input', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroUsuario').addEventListener('input', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroDescripcion').addEventListener('input', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroAnioGasto').addEventListener('change', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('filtroMesGasto').addEventListener('change', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('btnAplicarFiltroGasto').addEventListener('click', ()=>{ leerFiltrosGastos(); renderTabla('gastos'); actualizarBadges(); });
+  document.getElementById('btnLimpiarFiltroGasto').addEventListener('click', function() {
+    filtrosGastos = {categoria:'', banco:'', destino:'', destinoLibre:'', usuario:'', descripcion:'', anio:'', mes:''};
+    document.getElementById('filtroGasto').value = '';
+    document.getElementById('filtroBanco').value = '';
+    document.getElementById('filtroDestino').value = '';
+    document.getElementById('filtroDestinoLibre').value = '';
+    document.getElementById('filtroUsuario').value = '';
+    document.getElementById('filtroDescripcion').value = '';
+    document.getElementById('filtroAnioGasto').value = '';
+    document.getElementById('filtroMesGasto').value = '';
+    renderTabla('gastos');
+    actualizarBadges();
+  });
+  
+  document.getElementById('btnReportePagos').addEventListener('click', function() { leerFiltrosPagos(); mostrarModalReporte(document.getElementById('filtroAnioPago').value, document.getElementById('filtroMesPago').value, 'pagos'); });
+  document.getElementById('btnReporteGastos').addEventListener('click', function() { leerFiltrosGastos(); mostrarModalReporte(document.getElementById('filtroAnioGasto').value, document.getElementById('filtroMesGasto').value, 'gastos'); });
+  
+  inicializarFiltrosFecha();
+  inicializarFiltrosTaxes();
+  
+  document.getElementById('btnF2').addEventListener('click', salvarDatos);
+  document.getElementById('btnF3').addEventListener('click', abrirSelectorReporte);
+  document.getElementById('btnF4').addEventListener('click', editarRegistroSeleccionado);
+  document.getElementById('btnF5').addEventListener('click', copiarRegistroSeleccionado);
+  document.getElementById('btnF7').addEventListener('click', crearRegistro);
+  document.getElementById('btnF8').addEventListener('click', borrarSeleccionados);
+  document.getElementById('btnCargarSalva').addEventListener('click', abrirSelectorSalva);
+  document.getElementById('btnReporteFiltrado').addEventListener('click', ()=>abrirSelectorReporte());
+  
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') { cerrarModalReporte(); cerrarModalSalva(); cerrarSelectorReporte(); }
+  });
+  
+  renderTabla('pagos');
+  renderTabla('gastos');
+  actualizarSelectAnios();
+  actualizarResumen();
+  mostrarInfoCarga();
+  
+  if(pagos.length === 0 && gastos.length === 0) {
+    const alerta = document.getElementById('infoAlerta');
+    alerta.style.display = 'block';
+    alerta.innerHTML = `⚠️ No hay datos cargados.<br><strong>Haz clic en "📁 Cargar Salva" abajo para cargar tus datos desde C:/Salva</strong>`;
+  }
+  
+  actualizarBadges();
+  console.log('✅ V4.50 inicializado');
+}
+
+function mostrarInfoCarga() {
+  const info = document.getElementById('infoCarga');
+  if(pagos.length > 0 || gastos.length > 0) {
+    info.style.display = 'block';
+    info.innerHTML = `✅ <strong>Datos cargados:</strong> ${pagos.length} pagos y ${gastos.length} gastos`;
+    setTimeout(() => { info.style.display = 'none'; }, 5000);
+  }
+}
+
+function hoyDDMMYYYY(){ const d=new Date(); return ("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear(); }
+function horaHHMMSS(){ const d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2); }
+function validarFechaStr(str){ const parts=str.split('/'); if(parts.length!==3) return false; const dd=+parts[0], mm=+parts[1], yy=+parts[2]; const d=new Date(yy,mm-1,dd); return d && d.getDate()===dd && d.getMonth()===mm-1 && d.getFullYear()===yy; }
+
+function obtenerAniosDisponibles() {
+  const anios = new Set();
+  const añoActual = new Date().getFullYear();
+  for (let i = añoActual - 5; i <= añoActual + 2; i++) anios.add(i.toString());
+  pagos.forEach(p => anios.add(p.fecha.split('/')[2]));
+  gastos.forEach(g => anios.add(g.fecha.split('/')[2]));
+  return Array.from(anios).sort((a, b) => b - a);
+}
+
+function aplicarFiltroFecha(registro, anio, mes) {
+  if (!anio && !mes) return true;
+  const partes = registro.fecha.split('/');
+  if (anio && partes[2] !== anio) return false;
+  if (mes && partes[1] !== mes) return false;
+  return true;
+}
+
+const conceptoPago = document.getElementById('conceptoPago');
+conceptoPago.addEventListener('change', toggleTaxesVisibility);
+function toggleTaxesVisibility(){ document.getElementById('taxesBlock').classList[conceptoPago.value==='Sueldo'?'remove':'add']('hidden'); }
+
+function renderTabla(tipo){
+  if(tipo==='pagos'){
+    const tbody=document.querySelector('#tablaPagos tbody'); tbody.innerHTML='';
+    let totalFiltrado = 0, contador = 0;
+    pagos.forEach((p,i)=>{
+      if(filtrosPagos.concepto && !coincide(p.concepto, filtrosPagos.concepto)) return;
+      if(filtrosPagos.descripcion && !normalizarTexto(p.descripcion).includes(normalizarTexto(filtrosPagos.descripcion))) return;
+      if((filtrosPagos.anio || filtrosPagos.mes) && !aplicarFiltroFecha(p, filtrosPagos.anio, filtrosPagos.mes)) return;
+      totalFiltrado += p.monto;
+      contador++;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><input type="checkbox" class="check-pago" data-idx="${i}"></td><td>${contador}</td><td>${p.fecha}</td><td>${p.concepto}</td><td>${p.descripcion || ''}</td><td>${p.monto.toFixed(2)}</td><td><button class="btn-blue" onclick="editarPago(${i})">Editar</button></td>`;
+      tbody.appendChild(tr);
+    });
+    const divSaldo = document.getElementById('saldoPagosFiltrado');
+    const hayFiltro = filtrosPagos.concepto || filtrosPagos.anio || filtrosPagos.mes || filtrosPagos.descripcion;
+    if(hayFiltro) {
+      let desc = [];
+      if(filtrosPagos.concepto) desc.push(`Concepto: ${filtrosPagos.concepto}`);
+      if(filtrosPagos.descripcion) desc.push(`Desc: ${filtrosPagos.descripcion}`);
+      if(filtrosPagos.mes) desc.push(`Mes: ${getNombreMes(filtrosPagos.mes)}`);
+      if(filtrosPagos.anio) desc.push(`Año: ${filtrosPagos.anio}`);
+      divSaldo.innerHTML = `<div style="margin-top:15px;padding:15px;background:#e8f5e8;border-radius:8px;border-left:4px solid #2e7d32"><strong>🔍 Filtro: ${desc.join(' | ')}</strong><br><span>Registros: <strong>${contador}</strong></span><br><strong>Total: <span style="color:#2e7d32;font-size:20px">$${totalFiltrado.toFixed(2)}</span></strong></div>`;
+    } else { divSaldo.innerHTML = ''; }
+  } else {
+    const tbody=document.querySelector('#tablaGastos tbody'); tbody.innerHTML='';
+    let totalFiltrado = 0, contador = 0;
+    gastos.forEach((g,i)=>{
+      if(filtrosGastos.categoria && !coincide(g.categoria, filtrosGastos.categoria)) return;
+      if(filtrosGastos.banco && !coincide(g.banco, filtrosGastos.banco)) return;
+      if(filtrosGastos.destino && !coincide(g.destino, filtrosGastos.destino)) return;
+      if(filtrosGastos.destinoLibre && !normalizarTexto(g.destino).includes(normalizarTexto(filtrosGastos.destinoLibre))) return;
+      if(filtrosGastos.usuario && !normalizarTexto(g.usuario).includes(normalizarTexto(filtrosGastos.usuario))) return;
+      if(filtrosGastos.descripcion && !normalizarTexto(g.descripcion).includes(normalizarTexto(filtrosGastos.descripcion))) return;
+      if((filtrosGastos.anio || filtrosGastos.mes) && !aplicarFiltroFecha(g, filtrosGastos.anio, filtrosGastos.mes)) return;
+      totalFiltrado += g.monto;
+      contador++;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td><input type="checkbox" class="check-gasto" data-idx="${i}"></td><td>${contador}</td><td>${g.fecha}</td><td>${g.categoria}</td><td>${g.banco}</td><td>${g.usuario || ''}</td><td>${g.destino || ''}</td><td>${g.descripcion || ''}</td><td>${g.monto.toFixed(2)}</td><td><button class="btn-blue" onclick="editarGasto(${i})">Editar</button></td>`;
+      tbody.appendChild(tr);
+    });
+    const divSaldo = document.getElementById('saldoGastosFiltrado');
+    const hayFiltro = filtrosGastos.categoria || filtrosGastos.banco || filtrosGastos.destino || filtrosGastos.destinoLibre || filtrosGastos.usuario || filtrosGastos.descripcion || filtrosGastos.anio || filtrosGastos.mes;
+    if(hayFiltro) {
+      let desc = [];
+      if(filtrosGastos.categoria) desc.push(`Cat: ${filtrosGastos.categoria}`);
+      if(filtrosGastos.banco) desc.push(`Banco: ${filtrosGastos.banco}`);
+      if(filtrosGastos.destino) desc.push(`Prov: ${filtrosGastos.destino}`);
+      if(filtrosGastos.destinoLibre) desc.push(`Buscar: ${filtrosGastos.destinoLibre}`);
+      if(filtrosGastos.usuario) desc.push(`Usuario: ${filtrosGastos.usuario}`);
+      if(filtrosGastos.descripcion) desc.push(`Desc: ${filtrosGastos.descripcion}`);
+      if(filtrosGastos.mes) desc.push(`Mes: ${getNombreMes(filtrosGastos.mes)}`);
+      if(filtrosGastos.anio) desc.push(`Año: ${filtrosGastos.anio}`);
+      divSaldo.innerHTML = `<div style="margin-top:15px;padding:15px;background:#ffe8e8;border-radius:8px;border-left:4px solid #f44336"><strong>🔍 Filtro: ${desc.join(' | ')}</strong><br><span>Registros: <strong>${contador}</strong></span><br><strong>Total: <span style="color:#f44336;font-size:20px">$${totalFiltrado.toFixed(2)}</span></strong></div>`;
+    } else { divSaldo.innerHTML = ''; }
+  }
+}
+
+function editarPago(index) {
+  edit = {tipo: 'pagos', index: index};
+  const p = pagos[index];
+  document.getElementById('fechaPago').value = p.fecha;
+  document.getElementById('montoPago').value = p.monto;
+  document.getElementById('conceptoPago').value = p.concepto;
+  document.getElementById('descripcionPago').value = p.descripcion || '';
+  toggleTaxesVisibility();
+  if(p.taxes){ document.getElementById('taxFITW').value = p.taxes.FITW; document.getElementById('taxMED').value = p.taxes.MED; document.getElementById('taxSS').value = p.taxes.SS; }
+  document.getElementById('btnAgregarPago').textContent = 'Actualizar Pago';
+  abrir('pagos');
+}
+
+function editarGasto(index) {
+  edit = {tipo: 'gastos', index: index};
+  const g = gastos[index];
+  document.getElementById('fechaGasto').value = g.fecha;
+  document.getElementById('montoGasto').value = g.monto;
+  document.getElementById('categoriaGasto').value = g.categoria;
+  document.getElementById('bancoGasto').value = g.banco;
+  document.getElementById('usuarioGasto').value = g.usuario || '';
+  document.getElementById('descripcionGasto').value = g.descripcion || '';
+  const selDest = document.getElementById('destinoGasto');
+  const destGuardado = (g.destino || '').trim();
+  const opcionMatch = [...selDest.options].find(o => normalizarTexto(o.value) === normalizarTexto(destGuardado));
+  if(opcionMatch) selDest.value = opcionMatch.value;
+  else if(destGuardado) { const opt = document.createElement('option'); opt.value = destGuardado; opt.text = destGuardado; selDest.appendChild(opt); selDest.value = destGuardado; }
+  document.getElementById('btnAgregarGasto').textContent = 'Actualizar Gasto';
+  abrir('gastos');
+}
+
+document.getElementById('btnAgregarPago').addEventListener('click', ()=>agregarPago());
+document.getElementById('btnAgregarGasto').addEventListener('click', ()=>agregarGasto());
+
+function agregarPago(){
+  const fecha=document.getElementById('fechaPago').value.trim();
+  const monto=parseFloat(document.getElementById('montoPago').value);
+  const concepto=limpiarTexto(document.getElementById('conceptoPago').value);
+  const descripcion=limpiarTexto(document.getElementById('descripcionPago').value);
+  if(!validarFechaStr(fecha)){ alert('Formato fecha inválido'); return; }
+  if(isNaN(monto)){ alert('Monto inválido'); return; }
+  const hora = horaHHMMSS();
+  const taxes = (concepto==='Sueldo') ? {FITW:parseFloat(document.getElementById('taxFITW').value)||0, MED:parseFloat(document.getElementById('taxMED').value)||0, SS:parseFloat(document.getElementById('taxSS').value)||0} : null;
+  const registro = {fecha,hora,concepto,descripcion,monto,taxes,fechaSalva:hoyDDMMYYYY(),horaSalva:horaHHMMSS()};
+  if(edit.tipo==='pagos' && edit.index>=0){ pagos[edit.index]=registro; edit={tipo:null,index:-1}; document.getElementById('btnAgregarPago').textContent = 'Agregar Pago'; }
+  else pagos.push(registro);
+  pagos.sort((a,b)=> new Date(a.fecha.split('/').reverse().join('-')) - new Date(b.fecha.split('/').reverse().join('-')));
+  renderTabla('pagos'); actualizarSelectAnios(); actualizarResumen(); guardarLocal(); limpiarForm('pagos');
+}
+
+function agregarGasto(){
+  const fecha=document.getElementById('fechaGasto').value.trim();
+  const monto=parseFloat(document.getElementById('montoGasto').value);
+  const categoria=limpiarTexto(document.getElementById('categoriaGasto').value);
+  const banco=limpiarTexto(document.getElementById('bancoGasto').value);
+  const usuario=limpiarTexto(document.getElementById('usuarioGasto').value);
+  const destino=limpiarTexto(document.getElementById('destinoGasto').value);
+  const descripcion=limpiarTexto(document.getElementById('descripcionGasto').value);
+  if(!validarFechaStr(fecha)){ alert('Formato fecha inválido'); return; }
+  if(isNaN(monto)){ alert('Monto inválido'); return; }
+  const hora = horaHHMMSS();
+  const registro = {fecha,hora,categoria,banco,usuario,destino,descripcion,monto,fechaSalva:hoyDDMMYYYY(),horaSalva:horaHHMMSS()};
+  if(edit.tipo==='gastos' && edit.index>=0){ gastos[edit.index]=registro; edit={tipo:null,index:-1}; document.getElementById('btnAgregarGasto').textContent = 'Agregar Gasto'; }
+  else gastos.push(registro);
+  gastos.sort((a,b)=> new Date(a.fecha.split('/').reverse().join('-')) - new Date(b.fecha.split('/').reverse().join('-')));
+  renderTabla('gastos'); actualizarSelectAnios(); actualizarSelectoresFormulario(); actualizarSelectoresFiltro(); actualizarResumen(); guardarLocal(); limpiarForm('gastos');
+}
+
+function limpiarForm(tipo){
+  if(tipo==='pagos'){ document.getElementById('montoPago').value=''; document.getElementById('descripcionPago').value=''; document.getElementById('taxFITW').value=''; document.getElementById('taxMED').value=''; document.getElementById('taxSS').value=''; document.getElementById('fechaPago').value=hoyDDMMYYYY(); }
+  if(tipo==='gastos'){ document.getElementById('montoGasto').value=''; document.getElementById('fechaGasto').value=hoyDDMMYYYY(); document.getElementById('usuarioGasto').value=''; document.getElementById('descripcionGasto').value=''; }
+}
+
+function editarRegistroSeleccionado(){
+  let sel;
+  if(document.querySelector('#pagos').style.display!=='none'){ sel=document.querySelector('#tablaPagos tbody input[type=checkbox]:checked'); if(sel) editarPago(parseInt(sel.dataset.idx)); else alert('Selecciona un pago'); }
+  else if(document.querySelector('#gastos').style.display!=='none'){ sel=document.querySelector('#tablaGastos tbody input[type=checkbox]:checked'); if(sel) editarGasto(parseInt(sel.dataset.idx)); else alert('Selecciona un gasto'); }
+  else { alert('Primero abre Pagos o Gastos'); }
+}
+
+function copiarRegistroSeleccionado(){
+  let sel;
+  if(document.querySelector('#pagos').style.display!=='none'){
+    sel=document.querySelector('#tablaPagos tbody input[type=checkbox]:checked');
+    if(!sel){ alert('Selecciona un pago'); return; }
+    const p=pagos[parseInt(sel.dataset.idx)];
+    document.getElementById('fechaPago').value=p.fecha;
+    document.getElementById('montoPago').value=p.monto;
+    document.getElementById('conceptoPago').value=p.concepto;
+    document.getElementById('descripcionPago').value=p.descripcion || '';
+    toggleTaxesVisibility();
+    if(p.taxes){ document.getElementById('taxFITW').value=p.taxes.FITW; document.getElementById('taxMED').value=p.taxes.MED; document.getElementById('taxSS').value=p.taxes.SS; }
+    abrir('pagos');
+    document.getElementById('btnAgregarPago').textContent = 'Agregar Pago';
+    edit = {tipo:null, index:-1};
+  } else if(document.querySelector('#gastos').style.display!=='none'){
+    sel=document.querySelector('#tablaGastos tbody input[type=checkbox]:checked');
+    if(!sel){ alert('Selecciona un gasto'); return; }
+    const g=gastos[parseInt(sel.dataset.idx)];
+    document.getElementById('fechaGasto').value=g.fecha;
+    document.getElementById('montoGasto').value=g.monto;
+    document.getElementById('categoriaGasto').value=g.categoria;
+    document.getElementById('bancoGasto').value=g.banco;
+    document.getElementById('usuarioGasto').value=g.usuario || '';
+    document.getElementById('descripcionGasto').value=g.descripcion || '';
+    const selDest = document.getElementById('destinoGasto');
+    const destGuardado = (g.destino || '').trim();
+    const opcionMatch = [...selDest.options].find(o => normalizarTexto(o.value) === normalizarTexto(destGuardado));
+    if(opcionMatch) selDest.value = opcionMatch.value;
+    abrir('gastos');
+    document.getElementById('btnAgregarGasto').textContent = 'Agregar Gasto';
+    edit = {tipo:null, index:-1};
+  } else { alert('Primero abre Pagos o Gastos'); }
+}
+
+function crearRegistro(){ 
+  edit={tipo:null,index:-1}; 
+  if(document.querySelector('#pagos').style.display !== 'none') { limpiarForm('pagos'); document.getElementById('btnAgregarPago').textContent = 'Agregar Pago'; }
+  else if(document.querySelector('#gastos').style.display !== 'none') { limpiarForm('gastos'); document.getElementById('btnAgregarGasto').textContent = 'Agregar Gasto'; }
+}
+
+document.getElementById('checkAllPagos').addEventListener('change', e=>{ document.querySelectorAll('#tablaPagos tbody input[type=checkbox]').forEach(cb=>cb.checked=e.target.checked); });
+document.getElementById('checkAllGastos').addEventListener('change', e=>{ document.querySelectorAll('#tablaGastos tbody input[type=checkbox]').forEach(cb=>cb.checked=e.target.checked); });
+
+function borrarSeleccionados(){
+  const checksPagos = document.querySelectorAll('#tablaPagos tbody input[type=checkbox]:checked');
+  const indicesPagos = Array.from(checksPagos).map(cb => parseInt(cb.dataset.idx));
+  const checksGastos = document.querySelectorAll('#tablaGastos tbody input[type=checkbox]:checked');
+  const indicesGastos = Array.from(checksGastos).map(cb => parseInt(cb.dataset.idx));
+  if (indicesPagos.length === 0 && indicesGastos.length === 0) { alert('Selecciona al menos un registro'); return; }
+  if(!confirm(`¿Eliminar ${indicesPagos.length + indicesGastos.length} registros?`)) return;
+  indicesPagos.sort((a,b) => b - a).forEach(i => pagos.splice(i, 1));
+  indicesGastos.sort((a,b) => b - a).forEach(i => gastos.splice(i, 1));
+  renderTabla('pagos'); renderTabla('gastos'); actualizarSelectAnios(); actualizarResumen(); guardarLocal();
+  alert('Registros eliminados');
+}
+
+function actualizarResumen(){
+  const {anio, mes} = filtroActual;
+  const totalPagos = pagos.reduce((s,p) => aplicarFiltroFecha(p, anio, mes) ? s + p.monto : s, 0);
+  const totalGastos = gastos.reduce((s,g) => aplicarFiltroFecha(g, anio, mes) ? s + g.monto : s, 0);
+  document.getElementById('totalPagos').innerText = totalPagos.toFixed(2);
+  document.getElementById('totalGastos').innerText = totalGastos.toFixed(2);
+  document.getElementById('balance').innerText = (totalPagos-totalGastos).toFixed(2);
+}
+
+let chart=null;
+function actualizarGrafico(){
+  const {anio, mes} = filtroActual;
+  const totalPagos = pagos.reduce((s,p) => aplicarFiltroFecha(p, anio, mes) ? s + p.monto : s, 0);
+  const totalGastos = gastos.reduce((s,g) => aplicarFiltroFecha(g, anio, mes) ? s + g.monto : s, 0);
+  const ctx=document.getElementById('grafico').getContext('2d');
+  if(chart) chart.destroy();
+  let titulo = 'Resumen General';
+  if (anio && mes) titulo = `Resumen ${getNombreMes(mes)} ${anio}`;
+  else if (anio) titulo = `Resumen Año ${anio}`;
+  else if (mes) titulo = `Resumen ${getNombreMes(mes)}`;
+  chart = new Chart(ctx,{
+    type:'bar',
+    data:{labels:['Pagos','Gastos'], datasets:[{label:'Montos', data:[totalPagos, totalGastos], backgroundColor:['#2e7d32','#f44336']}]},
+    options:{responsive:true, plugins:{legend:{display:false}, title:{display:true, text:titulo, font:{size:16}}}}
+  });
+}
+
+function inicializarFiltrosFecha() {
+  document.getElementById('btnAplicarFiltro').addEventListener('click', function() {
+    filtroActual = {anio: document.getElementById('filtroAnio').value, mes: document.getElementById('filtroMes').value};
+    actualizarResumen();
+    actualizarGrafico();
+  });
+  document.getElementById('btnLimpiarFiltro').addEventListener('click', function() {
+    document.getElementById('filtroAnio').value = '';
+    document.getElementById('filtroMes').value = '';
+    filtroActual = {anio: '', mes: ''};
+    actualizarResumen();
+    actualizarGrafico();
+  });
+  document.getElementById('btnAplicarFiltroVista').addEventListener('click', function() {
+    generarVista(document.getElementById('filtroAnioVista').value, document.getElementById('filtroMesVista').value);
+  });
+  document.getElementById('btnLimpiarFiltroVista').addEventListener('click', function() {
+    document.getElementById('filtroAnioVista').value = '';
+    document.getElementById('filtroMesVista').value = '';
+    generarVista('', '');
+  });
+}
+  
+function generarVista(anioFiltro = '', mesFiltro = ''){
+  if (anioFiltro && typeof anioFiltro === 'object') anioFiltro = '';
+  if (mesFiltro && typeof mesFiltro === 'object') mesFiltro = '';
+  anioFiltro = String(anioFiltro || '');
+  mesFiltro = String(mesFiltro || '');
+  if (anioFiltro === '' && mesFiltro === '') {
+    anioFiltro = document.getElementById('filtroAnioVista').value;
+    mesFiltro = document.getElementById('filtroMesVista').value;
+  }
+  const pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
+  const gastosFiltrados = gastos.filter(g => aplicarFiltroFecha(g, anioFiltro, mesFiltro));
+  const totalPagos = pagosFiltrados.reduce((s,p)=>s+p.monto,0);
+  const totalGastos = gastosFiltrados.reduce((s,g)=>s+g.monto,0);
+  const balance = totalPagos - totalGastos;
+  let titulo = 'Vista Previa - Todos los registros';
+  if (anioFiltro && mesFiltro) titulo = `Vista Previa - ${getNombreMes(mesFiltro)} ${anioFiltro}`;
+  else if (anioFiltro) titulo = `Vista Previa - Año ${anioFiltro}`;
+  else if (mesFiltro) titulo = `Vista Previa - ${getNombreMes(mesFiltro)}`;
+  let html = `<h3 style="color:#2e7d32">${titulo}</h3>`;
+  html += '<h4>Pagos</h4><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#2e7d32;color:#fff"><th>#</th><th>Fecha Hora</th><th>Concepto</th><th>Descripción</th><th>Monto</th><th>Taxes</th></tr></thead><tbody>';
+  pagosFiltrados.forEach((p,i)=> html += `<tr><td>${i+1}</td><td>${p.fecha} ${p.hora}</td><td>${p.concepto}</td><td>${p.descripcion || ''}</td><td>${p.monto.toFixed(2)}</td><td>${p.taxes?`FITW ${p.taxes.FITW.toFixed(2)} MED ${p.taxes.MED.toFixed(2)} SS ${p.taxes.SS.toFixed(2)}`:''}</td></tr>`);
+  html += `<tr class="total-row"><td colspan="4"><strong>TOTAL PAGOS</strong></td><td><strong>$${totalPagos.toFixed(2)}</strong></td><td></td></tr></tbody></table>`;
+  html += '<h4 style="margin-top:12px">Gastos</h4><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#2e7d32;color:#fff"><th>#</th><th>Fecha Hora</th><th>Categoría</th><th>Banco</th><th>Usuario</th><th>Proveedor/Agencia</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>';
+  gastosFiltrados.forEach((g,i)=> html += `<tr><td>${i+1}</td><td>${g.fecha} ${g.hora}</td><td>${g.categoria}</td><td>${g.banco}</td><td>${g.usuario || ''}</td><td>${g.destino || ''}</td><td>${g.descripcion || ''}</td><td>${g.monto.toFixed(2)}</td></tr>`);
+  html += `<tr class="total-row"><td colspan="7"><strong>TOTAL GASTOS</strong></td><td><strong>$${totalGastos.toFixed(2)}</strong></td></tr></tbody></table>`;
+  const claseSaldo = balance >= 0 ? 'saldo-positivo' : 'saldo-negativo';
+  html += `<div class="saldo-final ${claseSaldo}"><h3>💰 BALANCE FINAL DEL PERÍODO</h3><div class="monto">$${balance.toFixed(2)}</div><div class="detalle">Ingresos: $${totalPagos.toFixed(2)} &nbsp; | &nbsp; Gastos: $${totalGastos.toFixed(2)}</div></div>`;
+  document.getElementById('vistaContenido').innerHTML = html;
+}
+
+function actualizarSelectAnios() {
+  const anios = obtenerAniosDisponibles();
+  const selectores = ['filtroAnio','filtroAnioVista','filtroAnioTaxes','filtroAnioPago','filtroAnioGasto'];
+  selectores.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const seleccionActual = sel.value;
+    sel.innerHTML = '<option value="">Todos</option>';
+    anios.forEach(anio => { sel.innerHTML += `<option value="${anio}">${anio}</option>`; });
+    if (seleccionActual && anios.includes(seleccionActual)) sel.value = seleccionActual;
+  });
+}
+
+function exportExcel(){
+  const anioFiltro = document.getElementById('filtroAnioVista').value;
+  const mesFiltro = document.getElementById('filtroMesVista').value;
+  const pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
+  const gastosFiltrados = gastos.filter(g => aplicarFiltroFecha(g, anioFiltro, mesFiltro));
+  const wb = XLSX.utils.book_new();
+  let nombreArchivo = 'Registro_Pagos_Gastos_V4.50';
+  if (anioFiltro && mesFiltro) nombreArchivo = `Registro_${getNombreMes(mesFiltro)}_${anioFiltro}_V4.50`;
+  else if (anioFiltro) nombreArchivo = `Registro_${anioFiltro}_V4.50`;
+  else if (mesFiltro) nombreArchivo = `Registro_${getNombreMes(mesFiltro)}_V4.50`;
+  const datosPagos = pagosFiltrados.map(p=>({'#': '', 'Fecha Hora': p.fecha+' '+(p.hora||''), 'Concepto': p.concepto, 'Descripción': p.descripcion || '', 'Monto': p.monto.toFixed(2), 'FITW': (p.taxes?.FITW || 0).toFixed(2), 'MED': (p.taxes?.MED || 0).toFixed(2), 'SS': (p.taxes?.SS || 0).toFixed(2)}));
+  const totalPagos = pagosFiltrados.reduce((s,p)=>s+p.monto,0);
+  datosPagos.push({'#': '', 'Fecha Hora': '', 'Concepto': 'TOTAL PAGOS', 'Descripción': '', 'Monto': totalPagos.toFixed(2), 'FITW': pagosFiltrados.reduce((s,p)=>s+(p.taxes?.FITW||0),0).toFixed(2), 'MED': pagosFiltrados.reduce((s,p)=>s+(p.taxes?.MED||0),0).toFixed(2), 'SS': pagosFiltrados.reduce((s,p)=>s+(p.taxes?.SS||0),0).toFixed(2)});
+  const datosGastos = gastosFiltrados.map(g=>({'#': '', 'Fecha Hora': g.fecha+' '+(g.hora||''), 'Categoria': g.categoria, 'Banco': g.banco || '', 'Usuario': g.usuario || '', 'Proveedor/Agencia': g.destino || '', 'Descripción': g.descripcion || '', 'Monto': g.monto.toFixed(2)}));
+  const totalGastos = gastosFiltrados.reduce((s,g)=>s+g.monto,0);
+  datosGastos.push({'#': '', 'Fecha Hora': '', 'Categoria': 'TOTAL GASTOS', 'Banco': '', 'Usuario': '', 'Proveedor/Agencia': '', 'Descripción': '', 'Monto': totalGastos.toFixed(2)});
+  const balance = totalPagos - totalGastos;
+  const datosResumen = [{'Concepto': 'Total Pagos', 'Monto': totalPagos.toFixed(2)}, {'Concepto': 'Total Gastos', 'Monto': totalGastos.toFixed(2)}, {'Concepto': 'BALANCE FINAL', 'Monto': balance.toFixed(2)}];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosPagos), 'Pagos');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosGastos), 'Gastos');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datosResumen), 'Resumen');
+  XLSX.writeFile(wb, nombreArchivo + '.xlsx');
+}
+
+async function exportPDF(){
+  const anioFiltro = document.getElementById('filtroAnioVista').value;
+  const mesFiltro = document.getElementById('filtroMesVista').value;
+  const pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
+  const gastosFiltrados = gastos.filter(g => aplicarFiltroFecha(g, anioFiltro, mesFiltro));
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt',format:'a4'});
+  const left=40; 
+  let y=40;
+  let titulo = 'Registro Pagos y Gastos - V4.50';
+  if (anioFiltro && mesFiltro) titulo = `Registro ${getNombreMes(mesFiltro)} ${anioFiltro}`;
+  else if (anioFiltro) titulo = `Registro Año ${anioFiltro}`;
+  else if (mesFiltro) titulo = `Registro ${getNombreMes(mesFiltro)}`;
+  if(logoEmpresa) { try { doc.addImage(logoEmpresa, 'PNG', left, y-10, 50, 50); doc.setFontSize(14); doc.text(titulo, left+60, y+10); } catch(e) { doc.setFontSize(14); doc.text(titulo, left, y); } }
+  else { doc.setFontSize(14); doc.text(titulo, left, y); }
+  y+=40;
+  doc.setFillColor(46,125,50); doc.rect(left,y-10,520,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(10); doc.text('Pagos', left+6, y+4);
+  y+=20; doc.setTextColor(0,0,0); doc.setFontSize(9);
+  doc.text('#', left, y); doc.text('Fecha', left+30, y); doc.text('Concepto', left+120, y); doc.text('Descripción', left+200, y); doc.text('Monto', left+340, y); doc.text('Taxes', left+420, y);
+  y+=14;
+  let totalPagos = 0;
+  pagosFiltrados.forEach((p,i)=>{
+    const taxesText = p.taxes ? `F${p.taxes.FITW.toFixed(0)} M${p.taxes.MED.toFixed(0)} SS${p.taxes.SS.toFixed(0)}` : '';
+    doc.text(String(i+1), left, y); doc.text(p.fecha, left+30, y); doc.text((p.concepto || '').substring(0, 13), left+120, y); doc.text((p.descripcion || '').substring(0, 18), left+200, y); doc.text(p.monto.toFixed(2), left+340, y); doc.text(taxesText, left+420, y);
+    totalPagos += p.monto;
+    y+=12; if(y>760){ doc.addPage(); y=40; }
+  });
+  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL PAGOS', left+200, y); doc.text(totalPagos.toFixed(2), left+340, y); doc.setFont(undefined, 'normal');
+  y+=25;
+  doc.setFillColor(244,67,54); doc.rect(left,y-10,520,20,'F'); doc.setTextColor(255,255,255); doc.text('Gastos', left+6, y+4);
+  y+=20; doc.setTextColor(0,0,0);
+  doc.text('#', left, y); doc.text('Fecha', left+20, y); doc.text('Categoria', left+85, y); doc.text('Banco', left+155, y); doc.text('Usuario', left+220, y); doc.text('Proveedor', left+280, y); doc.text('Descripcion', left+360, y); doc.text('Monto', left+450, y);
+  y+=14;
+  let totalGastos = 0;
+  gastosFiltrados.forEach((g,i)=>{
+    doc.text(String(i+1), left, y); doc.text(g.fecha, left+20, y); doc.text((g.categoria || '').substring(0, 12), left+85, y); doc.text((g.banco || '').substring(0, 12), left+155, y); doc.text((g.usuario || '').substring(0, 10), left+220, y); doc.text((g.destino || '').substring(0, 13), left+280, y); doc.text((g.descripcion || '').substring(0, 15), left+360, y); doc.text(g.monto.toFixed(2), left+450, y);
+    totalGastos += g.monto;
+    y+=12; if(y>760){ doc.addPage(); y=40; }
+  });
+  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL GASTOS', left+100, y); doc.text(totalGastos.toFixed(2), left+450, y); doc.setFont(undefined, 'normal');
+  const balance = totalPagos - totalGastos;
+  y+=30;
+  doc.setFillColor(33,150,243); doc.rect(left,y-8,520,22,'F'); doc.setTextColor(255,255,255); doc.setFontSize(12); doc.text('BALANCE FINAL: $'+balance.toFixed(2), left+10, y+8);
+  let nombrePDF = 'Registro_Pagos_Gastos_V4.50.pdf';
+  if (anioFiltro && mesFiltro) nombrePDF = `Registro_${getNombreMes(mesFiltro)}_${anioFiltro}_V4.50.pdf`;
+  else if (anioFiltro) nombrePDF = `Registro_${anioFiltro}_V4.50.pdf`;
+  else if (mesFiltro) nombrePDF = `Registro_${getNombreMes(mesFiltro)}_V4.50.pdf`;
+  doc.save(nombrePDF);
+}
+
+function salvarDatos(){
+  const ahora = new Date();
+  const anio = ahora.getFullYear();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const hora = String(ahora.getHours()).padStart(2, '0');
+  const min = String(ahora.getMinutes()).padStart(2, '0');
+  const seg = String(ahora.getSeconds()).padStart(2, '0');
+  const nombreArchivo = `Backup_PagosGastos_V4.50_${anio}-${mes}-${dia}-${hora}-${min}-${seg}.json`;
+  const data = {pagos,gastos,config,version:'V4.50',savedAt:ahora.toISOString()};
+  const json = JSON.stringify(data,null,2);
+  const blob = new Blob([json],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=nombreArchivo; a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem(STORAGE_KEYS.principal, json);
+  localStorage.setItem(STORAGE_KEYS.version, json);
+  localStorage.setItem(STORAGE_KEYS.autosave, json);
+  localStorage.setItem(STORAGE_KEYS.ultimo, json);
+  localStorage.setItem(STORAGE_KEYS.backup, json);
+  actualizarBarraSalva(nombreArchivo, ahora.getTime());
+  localStorage.setItem(ULTIMA_SALVA_KEY, nombreArchivo);
+  alert('✅ Backup descargado: ' + nombreArchivo);
+}
+
+function cargarLocal(){
+  try{
+    let raw = localStorage.getItem(STORAGE_KEYS.principal);
+    if(!raw) raw = localStorage.getItem(STORAGE_KEYS.version);
+    if(!raw) raw = localStorage.getItem(STORAGE_KEYS.autosave);
+    if(!raw) raw = localStorage.getItem(STORAGE_KEYS.ultimo);
+    if(!raw) raw = localStorage.getItem(STORAGE_KEYS.backup);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    pagos = (data.pagos||[]).map(p => ({...p, concepto: limpiarTexto(p.concepto), descripcion: limpiarTexto(p.descripcion || '')}));
+    gastos = (data.gastos||[]).map(g => ({...g, categoria: limpiarTexto(g.categoria), banco: limpiarTexto(g.banco) || "Cash", usuario: limpiarTexto(g.usuario), destino: limpiarTexto(g.destino), descripcion: limpiarTexto(g.descripcion || '')}));
+    if(data.config) { if(data.config.bancos) config.bancos = data.config.bancos.map(limpiarTexto); if(data.config.categorias) config.categorias = data.config.categorias.map(limpiarTexto); if(data.config.destinos) config.destinos = data.config.destinos.map(limpiarTexto); }
+  }catch(e){ console.warn('Carga local fallida',e); }
+}
+
+document.addEventListener('keydown', function(e){
+  if(e.key==='F2'){ e.preventDefault(); salvarDatos(); }
+  if(e.key==='F3'){ e.preventDefault(); abrirSelectorReporte(); }
+  if(e.key==='F4'){ e.preventDefault(); editarRegistroSeleccionado(); }
+  if(e.key==='F5'){ e.preventDefault(); copiarRegistroSeleccionado(); }
+  if(e.key==='F7'){ e.preventDefault(); crearRegistro(); }
+  if(e.key==='F8'){ e.preventDefault(); borrarSeleccionados(); }
+});
+
+document.getElementById('btnRestaurar').addEventListener('click', ()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', restaurarDatos);
+
+function restaurarDatos(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      pagos = (data.pagos||[]).map(p => ({...p, concepto: limpiarTexto(p.concepto), descripcion: limpiarTexto(p.descripcion || '')}));
+      gastos = (data.gastos||[]).map(g => ({...g, categoria: limpiarTexto(g.categoria), banco: limpiarTexto(g.banco) || "Cash", usuario: limpiarTexto(g.usuario), destino: limpiarTexto(g.destino), descripcion: limpiarTexto(g.descripcion || '')}));
+      if(data.config) { config = data.config; config.bancos = (config.bancos || CONFIG_DEFAULT.bancos).map(limpiarTexto); config.categorias = (config.categorias || CONFIG_DEFAULT.categorias).map(limpiarTexto); config.destinos = (config.destinos || CONFIG_DEFAULT.destinos).map(limpiarTexto); localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); }
+      actualizarSelectoresFormulario(); actualizarSelectoresFiltro(); renderConfiguracion(); renderTabla('pagos'); renderTabla('gastos'); actualizarSelectAnios(); actualizarResumen(); guardarLocal();
+      localStorage.setItem(ULTIMA_SALVA_KEY, file.name);
+      actualizarBarraSalva(file.name, file.lastModified);
+      if (seccionActual === 'vista') generarVista();
+      document.getElementById('infoAlerta').style.display = 'none';
+      alert('✅ Datos cargados de: ' + file.name);
+    }catch(err){ alert('Error: '+err.message); }
+  }
+  reader.readAsText(file);
+}
+
+document.getElementById('btnExcel').addEventListener('click', exportExcel);
+document.getElementById('btnPDF').addEventListener('click', exportPDF);
+document.getElementById('btnBorrar').addEventListener('click', borrarSeleccionados);
+
+window.editarPago = editarPago;
+window.editarGasto = editarGasto;
+window.editarRegistroSeleccionado = editarRegistroSeleccionado;
+window.copiarRegistroSeleccionado = copiarRegistroSeleccionado;
+window.crearRegistro = crearRegistro;
+window.borrarSeleccionados = borrarSeleccionados;
+window.generarVista = generarVista;
+window.salvarDatos = salvarDatos;
+window.exportExcel = exportExcel;
+window.exportPDF = exportPDF;
+window.generarReporteTaxes = generarReporteTaxes;
+window.mostrarModalReporte = mostrarModalReporte;
+window.cerrarModalReporte = cerrarModalReporte;
+window.imprimirModalReporte = imprimirModalReporte;
+window.exportarModalExcel = exportarModalExcel;
+window.exportarModalPDF = exportarModalPDF;
+window.agregarItemConfig = agregarItemConfig;
+window.eliminarItemConfig = eliminarItemConfig;
+window.guardarConfiguracion = guardarConfiguracion;
+window.restaurarConfigDefault = restaurarConfigDefault;
+window.repararDatosAntiguos = repararDatosAntiguos;
+window.diagnosticoDestinos = diagnosticoDestinos;
+window.diagnosticoStorage = diagnosticoStorage;
+window.limpiarCaracteresExtraños = limpiarCaracteresExtraños;
+window.limpiarProveedores = limpiarProveedores;
+window.abrirSelectorSalva = abrirSelectorSalva;
+window.cerrarModalSalva = cerrarModalSalva;
+window.seleccionarCarpetaSalva = seleccionarCarpetaSalva;
+window.cargarArchivoSalva = cargarArchivoSalva;
+window.actualizarBarraSalva = actualizarBarraSalva;
+window.abrir = abrir;
+window.volverAlMenu = volverAlMenu;
+window.cargarLogo = cargarLogo;
+window.quitarLogo = quitarLogo;
+window.abrirSelectorReporte = abrirSelectorReporte;
+window.cerrarSelectorReporte = cerrarSelectorReporte;
+window.generarReporteDesdeSelector = generarReporteDesdeSelector;
+</script>
+</body>
+</html>
