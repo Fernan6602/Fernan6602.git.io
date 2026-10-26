@@ -7955,10 +7955,11 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
       var atGuardado = lsGet(SYNC_AT);
       var nubeManda = !atGuardado || (nube.savedAt || '') !== atGuardado;
       if (!nubeManda && lsGet(SYNC_HASH) && lsGet(SYNC_HASH) !== lh) {
-        /* Dice estar al dia pero no tiene ese contenido: si no hubo guardados
-           locales posteriores a la sincronizacion, la bajada no quedo aplicada
-           y manda la nube (autocuracion); si los hubo, son ediciones reales. */
-        if (!(fechaLocal() > atGuardado)) nubeManda = true;
+        /* Dice estar al dia pero no tiene ese contenido (una bajada que no
+           quedo aplicada): se decide por CONTENIDO, no por relojes — si la
+           nube tiene igual o mas registros, manda la nube (autocuracion);
+           si este equipo tiene mas, son ediciones reales suyas y se suben. */
+        if (totalDe(nube) >= totalDe(local)) nubeManda = true;
       }
       if (nubeManda) {
         estado('☁️ La nube tiene datos más nuevos: actualizando este equipo…');
@@ -8042,6 +8043,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     });
   });
 })();
+
 
 
 
