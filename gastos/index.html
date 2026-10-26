@@ -5981,9 +5981,10 @@
         <input id="descripcionGasto" type="text" placeholder="Ej: Repelente mosquitos" />
       </label>
       <button id="btnAgregarGasto" class="btn-blue">Agregar Gasto</button>
+      <button id="btnBuscarGastos" class="btn-green" title="Mostrar u ocultar la fila de búsqueda">🔍 Buscar</button>
     </div>
 
-    <div class="filter-section gastos" style="margin-top:8px">
+    <div class="filter-section gastos" id="filtrosGastos" style="margin-top:8px;display:none">
       <strong>🔍 Filtrar Gastos:</strong>
       <select id="filtroGasto">
         <option value="">Todas las categorías</option>
@@ -7796,13 +7797,17 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
   var REPO_API = 'https://api.github.com/repos/Fernan6602/Fernan6602.git.io/contents/gastos/datos.json';
   var RAW_URL = 'https://raw.githubusercontent.com/Fernan6602/Fernan6602.git.io/main/gastos/datos.json';
   var TOKEN_KEY = 'nube_github_token';
+  var SYNC_AT = 'nube_sync_at';
+  var SYNC_HASH = 'nube_sync_hash';
   var CLAVES = ['pagos_gastos', 'pagos_gastos_v450', 'pagos_gastos_autosave', 'pagos_gastos_lastdata'];
-  var pushing = false;
-  var pushTimer = null;
-  var ultimoEmpuje = '';
+  var busy = false;
+  var timer = null;
+  var ticks = 0;
+  var ultimoHashLocal = '';
 
   function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
-  function fechaLocal() { try { return localStorage.getItem('pagos_gastos_lastSave') || ''; } catch (e) { return ''; } }
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
   function b64encode(str) {
     var bytes = new TextEncoder().encode(str);
@@ -7833,6 +7838,29 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     } catch (e) { return { pagos: [], gastos: [], config: {} }; }
   }
 
+  /* Huella del CONTENIDO (no de la hora): dos copias con los mismos datos
+     dan la misma huella aunque el reloj de guardado difiera. */
+  function estable(v) {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v);
+    if (Object.prototype.toString.call(v) === '[object Array]') {
+      var a = [];
+      for (var i = 0; i < v.length; i++) a.push(estable(v[i]));
+      return '[' + a.join(',') + ']';
+    }
+    var ks = Object.keys(v).sort();
+    var p = [];
+    for (var j = 0; j < ks.length; j++) p.push(JSON.stringify(ks[j]) + ':' + estable(v[ks[j]]));
+    return '{' + p.join(',') + '}';
+  }
+  function hashStr(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+    return 'h' + (h >>> 0).toString(36) + '_' + s.length;
+  }
+  function hashDatos(d) {
+    return hashStr(estable({ pagos: (d && d.pagos) || [], gastos: (d && d.gastos) || [], config: (d && d.config) || {} }));
+  }
+
   function leerNube() {
     var t = token();
     if (t) {
@@ -7847,11 +7875,17 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
       .catch(function () { return null; });
   }
 
+  function marcarSync(at, hash) {
+    if (at) lsSet(SYNC_AT, at);
+    if (hash) lsSet(SYNC_HASH, hash);
+  }
+
   function aplicarDatos(nube) {
     var payload = JSON.stringify({ pagos: nube.pagos || [], gastos: nube.gastos || [], config: nube.config || {} });
     for (var i = 0; i < CLAVES.length; i++) { try { localStorage.setItem(CLAVES[i], payload); } catch (e) {} }
     if (nube.config) { try { localStorage.setItem('pagos_gastos_config', JSON.stringify(nube.config)); } catch (e) {} }
     try { localStorage.setItem('pagos_gastos_lastSave', nube.savedAt || new Date().toISOString()); } catch (e) {}
+    marcarSync(nube.savedAt || '', hashDatos(nube));
     var ya = false;
     try { ya = !!sessionStorage.getItem('nube_recargado'); } catch (e) {}
     if (!ya) {
@@ -7861,71 +7895,72 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     }
   }
 
-  function sincronizarAlAbrir() {
-    return leerNube().then(function (res) {
+  function subir(local, sha) {
+    var obj = { pagos: local.pagos, gastos: local.gastos, config: local.config, version: 'V4.51', savedAt: new Date().toISOString() };
+    var body = { message: 'Sync app gastos ' + obj.savedAt, content: b64encode(JSON.stringify(obj)) };
+    if (sha) body.sha = sha;
+    return fetch(REPO_API, {
+      method: 'PUT',
+      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      try { localStorage.setItem('pagos_gastos_lastSave', obj.savedAt); } catch (e) {}
+      marcarSync(obj.savedAt, hashDatos(obj));
+      ultimoHashLocal = hashDatos(obj);
+      estado('☁️ Sincronizado con la nube (' + totalDe(obj) + ' registros) a las ' + new Date().toLocaleTimeString() + '.');
+    });
+  }
+
+  /* Regla de oro: antes de subir, mirar la nube. Si la nube avanzó desde la
+     última sincronización de ESTE equipo, manda la nube (bajar), nunca taparla. */
+  function sincronizar() {
+    if (busy) return;
+    busy = true;
+    leerNube().then(function (res) {
+      var local = datosLocales();
+      var lh = hashDatos(local);
       if (!res || !res.data) {
         estado(token()
           ? '⚠️ No pude leer la nube ahora: sigues con los datos de este equipo.'
           : '📴 Este equipo aún no tiene tu llave: la app trabaja local. Pega tu llave abajo para activar la nube.');
-        return;
-      }
-      var nube = res.data;
-      var nubeFecha = nube.savedAt || '';
-      var lf = fechaLocal();
-      var local = datosLocales();
-      if (nubeFecha && nubeFecha > lf && (totalDe(nube) !== totalDe(local) || !lf)) {
-        aplicarDatos(nube);
-        return;
-      }
-      if (lf && nubeFecha && lf > nubeFecha) {
-        estado('☁️ Este equipo tiene datos más nuevos: subiendolos a la nube…');
-        programarPush(1200);
-        return;
-      }
-      estado('☁️ Al día con la nube: ' + totalDe(nube) + ' registros.');
-    });
-  }
-
-  function programarPush(ms) {
-    if (!token()) return;
-    if (pushTimer) clearTimeout(pushTimer);
-    pushTimer = setTimeout(empujarNube, ms || 4000);
-  }
-
-  function empujarNube() {
-    if (pushing || !token()) return;
-    pushing = true;
-    leerNube().then(function (res) {
-      var lf = fechaLocal();
-      if (res && res.data && res.data.savedAt && lf && res.data.savedAt > lf && totalDe(res.data) !== totalDe(datosLocales())) {
-        pushing = false;
-        aplicarDatos(res.data);
         return null;
       }
-      var d = datosLocales();
-      var obj = { pagos: d.pagos, gastos: d.gastos, config: d.config, version: 'V4.51', savedAt: new Date().toISOString() };
-      var body = { message: 'Sync app gastos ' + obj.savedAt, content: b64encode(JSON.stringify(obj)) };
-      if (res && res.sha) body.sha = res.sha;
-      return fetch(REPO_API, {
-        method: 'PUT',
-        headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        try { localStorage.setItem('pagos_gastos_lastSave', obj.savedAt); } catch (e) {}
-        ultimoEmpuje = obj.savedAt;
-        estado('☁️ Sincronizado con la nube (' + totalDe(obj) + ' registros) a las ' + new Date().toLocaleTimeString() + '.');
-      });
+      var nube = res.data;
+      var ch = hashDatos(nube);
+      if (ch === lh) {
+        marcarSync(nube.savedAt || '', ch);
+        ultimoHashLocal = lh;
+        estado('☁️ Al día con la nube: ' + totalDe(nube) + ' registros.');
+        return null;
+      }
+      var atGuardado = lsGet(SYNC_AT);
+      if (!atGuardado || (nube.savedAt || '') !== atGuardado) {
+        estado('☁️ La nube tiene datos más nuevos: actualizando este equipo…');
+        aplicarDatos(nube);
+        return null;
+      }
+      if (!token()) {
+        estado('📴 Este equipo tiene cambios y no tiene tu llave: pégala abajo para subirlos a la nube.');
+        return null;
+      }
+      estado('☁️ Subiendo tus cambios a la nube…');
+      return subir(local, res.sha);
     }).catch(function (e) {
-      estado('⚠️ No se pudo subir a la nube (' + e.message + '). Tus datos están a salvo en este equipo; lo reintento solo.');
-    }).then(function () { pushing = false; });
+      estado('⚠️ La sincronización falló (' + e.message + '). Lo reintento solo.');
+    }).then(function () { busy = false; });
+  }
+
+  function programarSync(ms) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(sincronizar, ms || 3000);
   }
 
   function engancharGuardado() {
     try {
       if (typeof guardarLocal === 'function' && !guardarLocal.__nube) {
         var original = guardarLocal;
-        var envuelta = function () { original(); programarPush(4000); };
+        var envuelta = function () { original(); programarSync(3000); };
         envuelta.__nube = true;
         guardarLocal = envuelta;
       }
@@ -7953,12 +7988,10 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
       try { localStorage.setItem(TOKEN_KEY, v); } catch (e) {}
       document.getElementById('nubeToken').value = '';
       estado('✅ Llave guardada en este equipo. Sincronizando…');
-      sincronizarAlAbrir();
-      programarPush(1500);
+      sincronizar();
     });
     document.getElementById('nubeSyncBtn').addEventListener('click', function () {
-      sincronizarAlAbrir();
-      programarPush(1500);
+      sincronizar();
     });
     if (token()) {
       var inp = document.getElementById('nubeToken');
@@ -7969,17 +8002,47 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
   window.addEventListener('load', function () {
     crearPanel();
     engancharGuardado();
-    ultimoEmpuje = fechaLocal();
-    sincronizarAlAbrir();
+    ultimoHashLocal = hashDatos(datosLocales());
+    sincronizar();
     setInterval(function () {
-      var lf = fechaLocal();
-      if (token() && lf && lf !== ultimoEmpuje) empujarNube();
+      ticks++;
+      var lh = hashDatos(datosLocales());
+      if (lh !== ultimoHashLocal || ticks % 4 === 0) { ultimoHashLocal = lh; sincronizar(); }
     }, 45000);
     document.addEventListener('visibilitychange', function () {
-      var lf = fechaLocal();
-      if (document.hidden && token() && lf && lf !== ultimoEmpuje) empujarNube();
+      if (document.hidden) {
+        var lh = hashDatos(datosLocales());
+        if (lh !== ultimoHashLocal) { ultimoHashLocal = lh; sincronizar(); }
+      }
     });
   });
+})();
+
+
+</script>
+<script>
+/* Botón Buscar de Gastos: la fila de filtros arranca oculta, se abre
+   con el botón y Enter en los buscadores aplica el filtro. */
+(function () {
+  function listo() {
+    var btn = document.getElementById('btnBuscarGastos');
+    var barra = document.getElementById('filtrosGastos');
+    if (!btn || !barra) return;
+    btn.addEventListener('click', function () {
+      var oculta = barra.style.display === 'none';
+      barra.style.display = oculta ? '' : 'none';
+      btn.textContent = oculta ? '🔍 Buscar ✕' : '🔍 Buscar';
+      if (oculta) { var i = document.getElementById('filtroDescripcion'); if (i) i.focus(); }
+    });
+    ['filtroDestinoLibre', 'filtroUsuario', 'filtroDescripcion'].forEach(function (id) {
+      var inp = document.getElementById(id);
+      if (inp) inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); var b = document.getElementById('btnAplicarFiltroGasto'); if (b) b.click(); }
+      });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', listo);
+  else listo();
 })();
 
 </script>
