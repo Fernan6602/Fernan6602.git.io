@@ -7900,7 +7900,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     lsSet(SYNC_AT, '');
     var nRec = 0;
     try { nRec = parseInt(sessionStorage.getItem('nube_recargas') || '0', 10) || 0; } catch (e) {}
-    if (nRec < 3) {
+    if (nRec < 6) {
       try { sessionStorage.setItem('nube_recargas', String(nRec + 1)); } catch (e) {}
       estado('☁️ Bajé datos más nuevos de la nube. Recargando…');
       setTimeout(function () { location.reload(); }, 700);
@@ -7934,6 +7934,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
       var lh = hashDatos(local);
       var pendHash = lsGet('nube_pendiente_hash');
       if (pendHash && lh === pendHash) {
+        try { sessionStorage.setItem('nube_recargas', '0'); } catch (e) {}
         marcarSync(lsGet('nube_pendiente_at'), pendHash);
         lsSet('nube_pendiente_hash', '');
         lsSet('nube_pendiente_at', '');
@@ -8043,6 +8044,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     });
   });
 })();
+
 
 
 
