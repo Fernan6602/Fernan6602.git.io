@@ -5417,6 +5417,18 @@
       "monto": 174,
       "fechaSalva": "25/10/2026",
       "horaSalva": "22:18:52"
+    },
+    {
+      "fecha": "28/10/2026",
+      "hora": "22:21:06",
+      "categoria": "Comida",
+      "banco": "Chase Bank",
+      "usuario": "Fernan",
+      "destino": "Fresco y Mas",
+      "descripcion": "Comida",
+      "monto": 9.98,
+      "fechaSalva": "25/10/2026",
+      "horaSalva": "22:21:06"
     }
   ],
   "config": {
@@ -5465,5 +5477,5 @@
     ]
   },
   "version": "V4.51",
-  "savedAt": "2026-10-26T02:18:52.000Z"
+  "savedAt": "2026-10-26T02:21:06.000Z"
 }
