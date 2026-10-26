@@ -7869,10 +7869,16 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
         .then(function (j) { return { data: JSON.parse(b64decode(j.content)), sha: j.sha }; })
         .catch(function () { return null; });
     }
-    return fetch(RAW_URL + '?t=' + Date.now(), { cache: 'no-store' })
+    var PAGES_URL = 'https://fernan6602.github.io/Fernan6602.git.io/gastos/datos.json';
+    return fetch(PAGES_URL + '?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) { return { data: d, sha: null }; })
-      .catch(function () { return null; });
+      .catch(function () {
+        return fetch(RAW_URL + '?t=' + Date.now(), { cache: 'no-store' })
+          .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (d) { return { data: d, sha: null }; })
+          .catch(function () { return null; });
+      });
   }
 
   function marcarSync(at, hash) {
@@ -7885,11 +7891,16 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     for (var i = 0; i < CLAVES.length; i++) { try { localStorage.setItem(CLAVES[i], payload); } catch (e) {} }
     if (nube.config) { try { localStorage.setItem('pagos_gastos_config', JSON.stringify(nube.config)); } catch (e) {} }
     try { localStorage.setItem('pagos_gastos_lastSave', nube.savedAt || new Date().toISOString()); } catch (e) {}
-    marcarSync(nube.savedAt || '', hashDatos(nube));
-    var ya = false;
-    try { ya = !!sessionStorage.getItem('nube_recargado'); } catch (e) {}
-    if (!ya) {
-      try { sessionStorage.setItem('nube_recargado', '1'); } catch (e) {}
+    /* No marcar como sincronizado todavia: la marca se confirma en la
+       proxima carga, solo si los datos locales quedaron iguales a la nube.
+       Asi, si el autoguardado de la app pisa la bajada, se reintenta. */
+    lsSet('nube_pendiente_at', nube.savedAt || '');
+    lsSet('nube_pendiente_hash', hashDatos(nube));
+    lsSet(SYNC_AT, '');
+    var nRec = 0;
+    try { nRec = parseInt(sessionStorage.getItem('nube_recargas') || '0', 10) || 0; } catch (e) {}
+    if (nRec < 3) {
+      try { sessionStorage.setItem('nube_recargas', String(nRec + 1)); } catch (e) {}
       estado('☁️ Bajé datos más nuevos de la nube. Recargando…');
       setTimeout(function () { location.reload(); }, 700);
     }
@@ -7920,6 +7931,12 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     leerNube().then(function (res) {
       var local = datosLocales();
       var lh = hashDatos(local);
+      var pendHash = lsGet('nube_pendiente_hash');
+      if (pendHash && lh === pendHash) {
+        marcarSync(lsGet('nube_pendiente_at'), pendHash);
+        lsSet('nube_pendiente_hash', '');
+        lsSet('nube_pendiente_at', '');
+      }
       if (!res || !res.data) {
         estado(token()
           ? '⚠️ No pude leer la nube ahora: sigues con los datos de este equipo.'
@@ -8017,6 +8034,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     });
   });
 })();
+
 
 
 </script>
