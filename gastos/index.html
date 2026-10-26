@@ -7801,6 +7801,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
   var SYNC_HASH = 'nube_sync_hash';
   var CLAVES = ['pagos_gastos', 'pagos_gastos_v450', 'pagos_gastos_autosave', 'pagos_gastos_lastdata'];
   var busy = false;
+  var aplicarPendiente = false;
   var timer = null;
   var ticks = 0;
   var ultimoHashLocal = '';
@@ -7902,6 +7903,9 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     try { nRec = parseInt(sessionStorage.getItem('nube_recargas') || '0', 10) || 0; } catch (e) {}
     if (nRec < 6) {
       try { sessionStorage.setItem('nube_recargas', String(nRec + 1)); } catch (e) {}
+      /* La app se guarda sola al cerrar o recargar (beforeunload): sin esta
+         bandera, pisaria la bajada con sus datos viejos al salir. */
+      aplicarPendiente = true;
       estado('☁️ Bajé datos más nuevos de la nube. Recargando…');
       setTimeout(function () { location.reload(); }, 700);
     }
@@ -7987,7 +7991,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     try {
       if (typeof guardarLocal === 'function' && !guardarLocal.__nube) {
         var original = guardarLocal;
-        var envuelta = function () { original(); programarSync(3000); };
+        var envuelta = function () { if (aplicarPendiente) return; original(); programarSync(3000); };
         envuelta.__nube = true;
         guardarLocal = envuelta;
       }
@@ -8044,6 +8048,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     });
   });
 })();
+
 
 
 
