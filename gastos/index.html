@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Control de Pagos y Gastos V4.51</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -284,6 +285,19 @@
     .btn-accion span.icon { font-size: 13px; }
     .logo-container { width: 50px; height: 50px; }
     .logo-placeholder { font-size: 26px; }
+  }
+</style>
+<style>
+  /* Ajuste para móvil (25-oct-2026): la app se veía pequeña en el teléfono porque
+     faltaba la línea viewport. Esto solo cambia tamaños en pantallas chicas;
+     no toca datos, claves de guardado ni funciones. */
+  @media (max-width: 700px) {
+    body { font-size: 15px; }
+    input, select, textarea { font-size: 16px !important; }
+    table { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { font-size: 13px; }
+    .btn-accion { padding: 10px 12px; font-size: 13px; min-height: 44px; }
+    .acciones-bar { justify-content: flex-start; }
   }
 </style>
 </head>
