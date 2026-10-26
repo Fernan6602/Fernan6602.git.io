@@ -5405,6 +5405,18 @@
       "monto": 230,
       "fechaSalva": "25/10/2026",
       "horaSalva": "22:11:49"
+    },
+    {
+      "fecha": "13/10/2026",
+      "hora": "22:18:52",
+      "categoria": "Hyundai",
+      "banco": "Bank of America",
+      "usuario": "Fernan",
+      "destino": "Seguro Full Cover",
+      "descripcion": "Entrada del seguro full cover del Hyundai Kona",
+      "monto": 174,
+      "fechaSalva": "25/10/2026",
+      "horaSalva": "22:18:52"
     }
   ],
   "config": {
@@ -5453,5 +5465,5 @@
     ]
   },
   "version": "V4.51",
-  "savedAt": "2026-10-26T02:11:49.000Z"
+  "savedAt": "2026-10-26T02:18:52.000Z"
 }
