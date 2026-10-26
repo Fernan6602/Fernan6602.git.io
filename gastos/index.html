@@ -6879,6 +6879,14 @@ function abrirSelectorReporte() {
   sel.innerHTML = '<option value="">Todos los años</option>';
   anios.forEach(a => { sel.innerHTML += `<option value="${a}">${a}</option>`; });
   if(valorActual && anios.includes(valorActual)) sel.value = valorActual;
+  // El selector arranca con el año/mes que el usuario tenga filtrado en sus pestañas (Gastos/Pagos)
+  try {
+    leerFiltrosGastos(); leerFiltrosPagos();
+    const anioTab = filtrosGastos.anio || filtrosPagos.anio || '';
+    const mesTab = filtrosGastos.mes || filtrosPagos.mes || '';
+    if(anioTab && anios.includes(String(anioTab))) sel.value = String(anioTab);
+    if(mesTab) document.getElementById('selectorMesReporte').value = String(mesTab).padStart(2, '0');
+  } catch(e) {}
   document.getElementById('modalSelectorReporte').style.display = 'flex';
 }
 
@@ -6887,9 +6895,21 @@ function cerrarSelectorReporte() {
 }
 
 function generarReporteDesdeSelector() {
-  const anio = document.getElementById('selectorAnioReporte').value;
-  const mes = document.getElementById('selectorMesReporte').value;
+  let anio = document.getElementById('selectorAnioReporte').value;
+  let mes = document.getElementById('selectorMesReporte').value;
   const tipo = document.getElementById('selectorTipoReporte').value;
+  // La búsqueda filtrada manda: si la pestaña del tipo elegido tiene año/mes puestos, el reporte usa esos
+  try {
+    if(tipo === 'gastos') {
+      leerFiltrosGastos();
+      if(filtrosGastos.anio) anio = filtrosGastos.anio;
+      if(filtrosGastos.mes) mes = filtrosGastos.mes;
+    } else if(tipo === 'pagos') {
+      leerFiltrosPagos();
+      if(filtrosPagos.anio) anio = filtrosPagos.anio;
+      if(filtrosPagos.mes) mes = filtrosPagos.mes;
+    }
+  } catch(e) {}
   cerrarSelectorReporte();
   mostrarModalReporte(anio, mes, tipo);
 }
@@ -7024,6 +7044,7 @@ function mostrarModalReporte(anioFiltro, mesFiltro, tipo = 'vista') {
     </table>
   </div>`;
   
+  window._ultimoReporteMeta = { titulo, infoTipo, tipo, anioFiltro, mesFiltro, totalPagos, totalGastos, balance, totalFITW, totalMED, totalSS, fechaGen: hoyDDMMYYYY() + ' a las ' + horaHHMMSS() };
   window._ultimosGastosFiltrados = gastosFiltrados;
   window._ultimosPagosFiltrados = pagosFiltrados;
   document.getElementById('modalReporteContenido').innerHTML = html;
@@ -7035,9 +7056,124 @@ function cerrarModalReporte() {
 }
 
 function imprimirModalReporte() {
-  const contenido = document.getElementById('modalReporteContenido').innerHTML;
+  const meta = window._ultimoReporteMeta;
   const ventana = window.open('', '_blank');
-  ventana.document.write(`<!DOCTYPE html><html><head><title>Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse;margin:15px 0}th,td{padding:8px;border:1px solid #ddd;text-align:center}th{background:#2e7d32;color:white}.total-row{background:#e8f5e8;font-weight:bold}.taxes-detail{background:#e8f5e8;padding:10px;margin:10px 0;border-radius:5px;border-left:3px solid #2e7d32}.tax-item{display:inline-block;margin-right:15px;font-weight:bold}.saldo-final{padding:20px;border-radius:10px;margin:20px 0;text-align:center;color:#fff}.saldo-positivo{background:#2e7d32}.saldo-negativo{background:#f44336}.saldo-final .monto{font-size:32px;font-weight:bold;margin:5px 0}.saldo-final .detalle{font-size:14px;opacity:0.9;margin-top:10px}</style></head><body>${contenido}</body></html>`);
+  const cssImp = `body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:0;padding:0}
+    @page{size:Letter;margin:10mm}
+    .pagina{page-break-after:always;padding:4px 2px}
+    .pagina.ultima{page-break-after:auto}
+    .encabezado{text-align:center;border-bottom:3px solid #2e7d32;padding-bottom:8px;margin-bottom:10px}
+    .encabezado h2{color:#2e7d32;margin:2px 0;font-size:17px}
+    .encabezado .sub{color:#2196F3;font-weight:bold;font-size:12px;margin:2px 0}
+    .encabezado .meta{color:#666;font-size:10px;margin:2px 0}
+    table{width:100%;border-collapse:collapse;margin:6px 0}
+    th,td{padding:5px 6px;border:1px solid #ccc;text-align:center;font-size:11px}
+    td.izq{text-align:left}
+    th.pagos{background:#2e7d32;color:#fff}
+    th.gastos{background:#f44336;color:#fff}
+    .total-row{background:#e8f5e8;font-weight:bold}
+    .subtotal-row{background:#fff8e1;font-weight:bold}
+    .saldo-final{padding:14px;border-radius:10px;margin:10px 0;text-align:center;color:#fff}
+    .saldo-positivo{background:#2e7d32}.saldo-negativo{background:#f44336}
+    .saldo-final h3{margin:0 0 4px}
+    .saldo-final .monto{font-size:26px;font-weight:bold;margin:3px 0}
+    .saldo-final .detalle{font-size:12px;opacity:.95}
+    .taxes-detail{background:#e8f5e8;padding:8px;margin:8px 0;border-radius:5px;border-left:3px solid #2e7d32}
+    .tax-item{display:inline-block;margin-right:15px;font-weight:bold}
+    .resumen{margin-top:14px;padding:14px;background:#f8f9fa;border-radius:10px;border-left:5px solid #2196F3;page-break-inside:avoid}
+    .resumen table td{border:none;padding:6px 10px;font-size:12px}
+    .titulo-seccion{margin:8px 0 2px;font-size:14px}
+    .pie-pagina{text-align:right;color:#888;font-size:9px;margin-top:6px}`;
+  if(!meta) {
+    const contenido = document.getElementById('modalReporteContenido').innerHTML;
+    ventana.document.write(`<!DOCTYPE html><html><head><title>Reporte</title><style>${cssImp}</style></head><body>${contenido}</body></html>`);
+    ventana.document.close();
+    setTimeout(() => { ventana.print(); }, 500);
+    return;
+  }
+  const pagosArr = window._ultimosPagosFiltrados || [];
+  const gastosArr = window._ultimosGastosFiltrados || [];
+  const FILAS_PAGOS = 20, FILAS_GASTOS = 22;
+  const encabezado = (seccion) => `<div class="encabezado">
+    ${logoEmpresa ? `<img src="${logoEmpresa}" style="max-height:44px;border-radius:6px;">` : ''}
+    <h2>${meta.titulo}</h2>
+    <p class="sub">${meta.infoTipo}${seccion ? ' — ' + seccion : ''}</p>
+    <p class="meta">Generado el ${meta.fechaGen}</p>
+  </div>`;
+  const bloqueSaldo = `<div class="saldo-final ${meta.balance >= 0 ? 'saldo-positivo' : 'saldo-negativo'}">
+      <h3>💰 BALANCE FINAL DEL PERÍODO</h3>
+      <div class="monto">$${meta.balance.toFixed(2)}</div>
+      <div class="detalle">Ingresos: $${meta.totalPagos.toFixed(2)} &nbsp; | &nbsp; Gastos: $${meta.totalGastos.toFixed(2)}</div>
+    </div>` + ((meta.totalFITW + meta.totalMED + meta.totalSS > 0) ? `<div class="taxes-detail">
+      <strong>Resumen de Taxes:</strong>
+      <span class="tax-item" style="color:#2196F3">FITW: $${meta.totalFITW.toFixed(2)}</span>
+      <span class="tax-item" style="color:#FF9800">MED: $${meta.totalMED.toFixed(2)}</span>
+      <span class="tax-item" style="color:#F44336">SS: $${meta.totalSS.toFixed(2)}</span>
+      <span class="tax-item" style="color:#2e7d32">Total: $${(meta.totalFITW + meta.totalMED + meta.totalSS).toFixed(2)}</span>
+    </div>` : '');
+  function tablaPagos(rows, desde) {
+    let sub = {m:0, f:0, me:0, s:0, n:0};
+    let h = '<table><thead><tr><th class="pagos">#</th><th class="pagos">Fecha Hora</th><th class="pagos">Concepto</th><th class="pagos">Descripción</th><th class="pagos">Monto</th><th class="pagos">FITW</th><th class="pagos">MED</th><th class="pagos">SS</th><th class="pagos">Neto</th></tr></thead><tbody>';
+    rows.forEach((p, i) => {
+      const f = p.taxes?.FITW || 0, me = p.taxes?.MED || 0, s = p.taxes?.SS || 0, n = p.monto - (f + me + s);
+      sub.m += p.monto; sub.f += f; sub.me += me; sub.s += s; sub.n += n;
+      h += `<tr><td>${desde + i + 1}</td><td>${p.fecha} ${p.hora || ''}</td><td class="izq">${p.concepto}</td><td class="izq">${p.descripcion || ''}</td><td>${p.monto.toFixed(2)}</td><td>${f.toFixed(2)}</td><td>${me.toFixed(2)}</td><td>${s.toFixed(2)}</td><td><strong>${n.toFixed(2)}</strong></td></tr>`;
+    });
+    return {h, sub};
+  }
+  function tablaGastos(rows, desde) {
+    let sub = 0;
+    let h = '<table><thead><tr><th class="gastos">#</th><th class="gastos">Fecha Hora</th><th class="gastos">Categoría</th><th class="gastos">Banco</th><th class="gastos">Usuario</th><th class="gastos">Proveedor/Agencia</th><th class="gastos">Descripción</th><th class="gastos">Monto</th></tr></thead><tbody>';
+    rows.forEach((g, i) => {
+      sub += g.monto;
+      h += `<tr><td>${desde + i + 1}</td><td>${g.fecha} ${g.hora || ''}</td><td class="izq">${g.categoria}</td><td>${g.banco || ''}</td><td>${g.usuario || ''}</td><td class="izq">${g.destino || ''}</td><td class="izq">${g.descripcion || ''}</td><td><strong>${g.monto.toFixed(2)}</strong></td></tr>`;
+    });
+    return {h, sub};
+  }
+  const paginas = [];
+  if(pagosArr.length === 0) {
+    paginas.push(encabezado('💰 Pagos') + '<h3 class="titulo-seccion" style="color:#2e7d32">💰 Pagos (0)</h3><table><tbody><tr><td style="padding:16px;color:#999">Sin pagos en este período</td></tr></tbody></table>');
+  } else {
+    for(let i = 0; i < pagosArr.length; i += FILAS_PAGOS) {
+      const trozo = pagosArr.slice(i, i + FILAS_PAGOS);
+      const esUltimo = (i + FILAS_PAGOS) >= pagosArr.length;
+      const t = tablaPagos(trozo, i);
+      let h = encabezado('💰 Pagos') + `<h3 class="titulo-seccion" style="color:#2e7d32">💰 Pagos (${pagosArr.length})</h3>` + t.h;
+      h += `<tr class="subtotal-row"><td colspan="4">Subtotal página</td><td>$${t.sub.m.toFixed(2)}</td><td>$${t.sub.f.toFixed(2)}</td><td>$${t.sub.me.toFixed(2)}</td><td>$${t.sub.s.toFixed(2)}</td><td>$${t.sub.n.toFixed(2)}</td></tr>`;
+      if(esUltimo) h += `<tr class="total-row"><td colspan="4"><strong>TOTAL PAGOS</strong></td><td><strong>$${meta.totalPagos.toFixed(2)}</strong></td><td><strong>$${meta.totalFITW.toFixed(2)}</strong></td><td><strong>$${meta.totalMED.toFixed(2)}</strong></td><td><strong>$${meta.totalSS.toFixed(2)}</strong></td><td><strong>$${(meta.totalPagos - meta.totalFITW - meta.totalMED - meta.totalSS).toFixed(2)}</strong></td></tr>`;
+      h += '</tbody></table>';
+      paginas.push(h);
+    }
+  }
+  if(gastosArr.length === 0) {
+    paginas.push(encabezado('💳 Gastos') + '<h3 class="titulo-seccion" style="color:#f44336">💳 Gastos (0)</h3><table><tbody><tr><td style="padding:16px;color:#999">Sin gastos en este período</td></tr></tbody></table>');
+  } else {
+    for(let i = 0; i < gastosArr.length; i += FILAS_GASTOS) {
+      const trozo = gastosArr.slice(i, i + FILAS_GASTOS);
+      const esUltimo = (i + FILAS_GASTOS) >= gastosArr.length;
+      const t = tablaGastos(trozo, i);
+      let h = encabezado('💳 Gastos') + `<h3 class="titulo-seccion" style="color:#f44336">💳 Gastos (${gastosArr.length})</h3>` + t.h;
+      h += `<tr class="subtotal-row"><td colspan="7">Subtotal página</td><td>$${t.sub.toFixed(2)}</td></tr>`;
+      if(esUltimo) h += `<tr class="total-row" style="background:#ffe8e8"><td colspan="7"><strong>TOTAL GASTOS</strong></td><td><strong>$${meta.totalGastos.toFixed(2)}</strong></td></tr>`;
+      h += '</tbody></table>';
+      paginas.push(h);
+    }
+  }
+  paginas[0] = paginas[0].replace('</div>', '</div>' + bloqueSaldo);
+  const bloqueResumen = `<div class="resumen">
+    <h3 style="margin-top:0;color:#1976D2">📊 Resumen Final</h3>
+    <table>
+      <tr><td style="text-align:left"><strong>Total Ingresos:</strong></td><td style="text-align:right">$${meta.totalPagos.toFixed(2)}</td></tr>
+      <tr><td style="text-align:left">Total Taxes:</td><td style="text-align:right;color:#f44336">-$${(meta.totalFITW + meta.totalMED + meta.totalSS).toFixed(2)}</td></tr>
+      <tr><td style="text-align:left"><strong>Ingresos Neto:</strong></td><td style="text-align:right"><strong>$${(meta.totalPagos - meta.totalFITW - meta.totalMED - meta.totalSS).toFixed(2)}</strong></td></tr>
+      <tr><td style="text-align:left"><strong>Total Gastos:</strong></td><td style="text-align:right;color:#f44336"><strong>-$${meta.totalGastos.toFixed(2)}</strong></td></tr>
+      <tr style="font-size:14px"><td style="text-align:left"><strong>BALANCE FINAL:</strong></td><td style="text-align:right;color:${meta.balance >= 0 ? '#2e7d32' : '#f44336'}"><strong>$${meta.balance.toFixed(2)}</strong></td></tr>
+    </table>
+  </div>`;
+  paginas[paginas.length - 1] += bloqueResumen;
+  const total = paginas.length;
+  const cuerpo = paginas.map((h, i) => `<div class="pagina${i === total - 1 ? ' ultima' : ''}">${h}<div class="pie-pagina">Página ${i + 1} de ${total}</div></div>`).join('');
+  ventana.document.write(`<!DOCTYPE html><html><head><title>${meta.titulo}</title><style>${cssImp}</style></head><body>${cuerpo}</body></html>`);
   ventana.document.close();
   setTimeout(() => { ventana.print(); }, 500);
 }
@@ -7075,51 +7211,128 @@ function exportarModalExcel() {
 function exportarModalPDF() {
   const pagosFiltrados = window._ultimosPagosFiltrados || [];
   const gastosFiltrados = window._ultimosGastosFiltrados || [];
+  const meta = window._ultimoReporteMeta || null;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'pt',format:'a4'});
-  const left=40; 
-  let y=40;
-  if(logoEmpresa) {
-    try { doc.addImage(logoEmpresa, 'PNG', left, y-10, 50, 50); doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left+60, y+10); }
-    catch(e) { doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left, y); }
-  } else { doc.setFontSize(14); doc.text('Reporte Filtrado - V4.50', left, y); }
-  y+=40;
-  doc.setFillColor(46,125,50); 
-  doc.rect(left,y-10,520,20,'F'); 
-  doc.setTextColor(255,255,255); 
-  doc.setFontSize(10);
-  doc.text('Pagos', left+6, y+4);
-  y+=20;
-  doc.setTextColor(0,0,0);
-  doc.setFontSize(8);
-  doc.text('#', left, y); doc.text('Fecha', left+25, y); doc.text('Concepto', left+95, y); doc.text('Descripción', left+175, y); doc.text('Monto', left+300, y); doc.text('FITW', left+360, y); doc.text('MED', left+405, y); doc.text('SS', left+445, y); doc.text('Neto', left+485, y);
-  y+=14;
-  let totalPagos=0, totalFITW=0, totalMED=0, totalSS=0;
-  pagosFiltrados.forEach((p,i)=>{
-    const fitw = p.taxes?.FITW || 0;
-    const med = p.taxes?.MED || 0;
-    const ss = p.taxes?.SS || 0;
-    doc.text(String(i+1), left, y); doc.text(p.fecha, left+25, y); doc.text((p.concepto || '').substring(0, 12), left+95, y); doc.text((p.descripcion || '').substring(0, 18), left+175, y); doc.text(p.monto.toFixed(2), left+300, y); doc.text(fitw.toFixed(2), left+360, y); doc.text(med.toFixed(2), left+405, y); doc.text(ss.toFixed(2), left+445, y); doc.text((p.monto-fitw-med-ss).toFixed(2), left+485, y);
-    totalPagos += p.monto; totalFITW += fitw; totalMED += med; totalSS += ss;
-    y+=12; if(y>760){ doc.addPage(); y=40; }
+  const left = 40, ancho = 520;
+  const titulo = meta ? meta.titulo : 'Reporte Filtrado';
+  const sub = meta ? (meta.infoTipo + '  |  Generado el ' + meta.fechaGen) : '';
+  const colsPagos = [['#',0],['Fecha',25],['Concepto',95],['Descripción',175],['Monto',300],['FITW',360],['MED',405],['SS',445],['Neto',485]];
+  const colsGastos = [['#',0],['Fecha',20],['Categoria',85],['Banco',155],['Usuario',220],['Proveedor',280],['Descripcion',360],['Monto',450]];
+  function encabezadoPDF(color, seccion, cols) {
+    let y = 46;
+    if(logoEmpresa) { try { doc.addImage(logoEmpresa, 'PNG', left, y - 24, 34, 34); } catch(e) {} }
+    const xTit = left + (logoEmpresa ? 42 : 0);
+    doc.setFontSize(13); doc.setFont(undefined, 'bold'); doc.setTextColor(46,125,50);
+    doc.text(titulo.substring(0, 76), xTit, y - 6);
+    doc.setFont(undefined, 'normal'); doc.setFontSize(9); doc.setTextColor(90,90,90);
+    if(sub) doc.text(sub.substring(0, 95), xTit, y + 8);
+    doc.setTextColor(0,0,0);
+    y += 28;
+    doc.setFillColor(color[0], color[1], color[2]);
+    doc.rect(left, y - 11, ancho, 20, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont(undefined, 'bold');
+    doc.text(seccion, left + 6, y + 3);
+    doc.setFont(undefined, 'normal'); doc.setTextColor(0,0,0);
+    y += 22;
+    if(cols && cols.length) {
+      doc.setFontSize(8); doc.setFont(undefined, 'bold');
+      cols.forEach(c => doc.text(c[0], left + c[1], y));
+      doc.setFont(undefined, 'normal');
+      y += 14;
+    }
+    return y;
+  }
+  // ---------- PAGOS ----------
+  let y = encabezadoPDF([46,125,50], 'Pagos (' + pagosFiltrados.length + ')', colsPagos);
+  let subM = 0, subF = 0, subME = 0, subS = 0;
+  let totM = 0, totF = 0, totME = 0, totS = 0;
+  function subtotalPagosPDF() {
+    doc.setFont(undefined, 'bold');
+    doc.text('Subtotal página', left + 95, y);
+    doc.text(subM.toFixed(2), left + 300, y);
+    doc.text(subF.toFixed(2), left + 360, y);
+    doc.text(subME.toFixed(2), left + 405, y);
+    doc.text(subS.toFixed(2), left + 445, y);
+    doc.text((subM - subF - subME - subS).toFixed(2), left + 485, y);
+    doc.setFont(undefined, 'normal');
+    subM = 0; subF = 0; subME = 0; subS = 0;
+  }
+  pagosFiltrados.forEach((p, i) => {
+    if(y > 745) { subtotalPagosPDF(); doc.addPage(); y = encabezadoPDF([46,125,50], 'Pagos (' + pagosFiltrados.length + ')', colsPagos); }
+    const f = p.taxes?.FITW || 0, me = p.taxes?.MED || 0, s = p.taxes?.SS || 0;
+    doc.setFontSize(8);
+    doc.text(String(i + 1), left, y); doc.text(p.fecha, left + 25, y); doc.text((p.concepto || '').substring(0, 12), left + 95, y); doc.text((p.descripcion || '').substring(0, 18), left + 175, y); doc.text(p.monto.toFixed(2), left + 300, y); doc.text(f.toFixed(2), left + 360, y); doc.text(me.toFixed(2), left + 405, y); doc.text(s.toFixed(2), left + 445, y); doc.text((p.monto - f - me - s).toFixed(2), left + 485, y);
+    subM += p.monto; subF += f; subME += me; subS += s;
+    totM += p.monto; totF += f; totME += me; totS += s;
+    y += 12;
   });
-  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL PAGOS', left+95, y); doc.text(totalPagos.toFixed(2), left+300, y); doc.setFont(undefined, 'normal');
-  y+=25;
-  doc.setFillColor(244,67,54); doc.rect(left,y-10,520,20,'F'); doc.setTextColor(255,255,255); doc.text('Gastos', left+6, y+4);
-  y+=20; doc.setTextColor(0,0,0);
-  doc.text('#', left, y); doc.text('Fecha', left+20, y); doc.text('Categoria', left+85, y); doc.text('Banco', left+155, y); doc.text('Usuario', left+220, y); doc.text('Proveedor', left+280, y); doc.text('Descripcion', left+360, y); doc.text('Monto', left+450, y);
-  y+=14;
-  let totalGastos = 0;
-  gastosFiltrados.forEach((g,i)=>{
-    doc.text(String(i+1), left, y); doc.text(g.fecha, left+20, y); doc.text((g.categoria || '').substring(0, 12), left+85, y); doc.text((g.banco || '').substring(0, 12), left+155, y); doc.text((g.usuario || '').substring(0, 10), left+220, y); doc.text((g.destino || '').substring(0, 13), left+280, y); doc.text((g.descripcion || '').substring(0, 15), left+360, y); doc.text(g.monto.toFixed(2), left+450, y);
-    totalGastos += g.monto;
-    y+=12; if(y>760){ doc.addPage(); y=40; }
+  if(pagosFiltrados.length) {
+    if(y > 745) { doc.addPage(); y = encabezadoPDF([46,125,50], 'Pagos (' + pagosFiltrados.length + ')', colsPagos); }
+    subtotalPagosPDF(); y += 14;
+    doc.setFont(undefined, 'bold');
+    doc.text('TOTAL PAGOS', left + 95, y); doc.text(totM.toFixed(2), left + 300, y); doc.text(totF.toFixed(2), left + 360, y); doc.text(totME.toFixed(2), left + 405, y); doc.text(totS.toFixed(2), left + 445, y); doc.text((totM - totF - totME - totS).toFixed(2), left + 485, y);
+    doc.setFont(undefined, 'normal');
+    y += 26;
+  }
+  // ---------- GASTOS ----------
+  if(y > 660) { doc.addPage(); y = encabezadoPDF([244,67,54], 'Gastos (' + gastosFiltrados.length + ')', colsGastos); }
+  else {
+    doc.setFillColor(244,67,54); doc.rect(left, y - 11, ancho, 20, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont(undefined, 'bold');
+    doc.text('Gastos (' + gastosFiltrados.length + ')', left + 6, y + 3);
+    doc.setFont(undefined, 'normal'); doc.setTextColor(0,0,0);
+    y += 22;
+    doc.setFontSize(8); doc.setFont(undefined, 'bold');
+    colsGastos.forEach(c => doc.text(c[0], left + c[1], y));
+    doc.setFont(undefined, 'normal');
+    y += 14;
+  }
+  let subG = 0, totG = 0;
+  function subtotalGastosPDF() {
+    doc.setFont(undefined, 'bold');
+    doc.text('Subtotal página', left + 100, y);
+    doc.text(subG.toFixed(2), left + 450, y);
+    doc.setFont(undefined, 'normal');
+    subG = 0;
+  }
+  gastosFiltrados.forEach((g, i) => {
+    if(y > 745) { subtotalGastosPDF(); doc.addPage(); y = encabezadoPDF([244,67,54], 'Gastos (' + gastosFiltrados.length + ')', colsGastos); }
+    doc.setFontSize(8);
+    doc.text(String(i + 1), left, y); doc.text(g.fecha, left + 20, y); doc.text((g.categoria || '').substring(0, 12), left + 85, y); doc.text((g.banco || '').substring(0, 12), left + 155, y); doc.text((g.usuario || '').substring(0, 10), left + 220, y); doc.text((g.destino || '').substring(0, 13), left + 280, y); doc.text((g.descripcion || '').substring(0, 15), left + 360, y); doc.text(g.monto.toFixed(2), left + 450, y);
+    subG += g.monto; totG += g.monto;
+    y += 12;
   });
-  y+=5; doc.setFont(undefined, 'bold'); doc.text('TOTAL GASTOS', left+100, y); doc.text(totalGastos.toFixed(2), left+450, y); doc.setFont(undefined, 'normal');
-  const balance = totalPagos - totalGastos;
-  y+=30;
-  doc.setFillColor(33,150,243); doc.rect(left,y-8,520,22,'F'); doc.setTextColor(255,255,255); doc.setFontSize(12); doc.text('BALANCE FINAL: $'+balance.toFixed(2), left+10, y+8);
-  doc.save(`Reporte_Filtrado_V4.50_${new Date().toISOString().split('T')[0]}.pdf`);
+  if(gastosFiltrados.length) {
+    if(y > 745) { doc.addPage(); y = encabezadoPDF([244,67,54], 'Gastos (' + gastosFiltrados.length + ')', colsGastos); }
+    subtotalGastosPDF(); y += 14;
+    doc.setFont(undefined, 'bold');
+    doc.text('TOTAL GASTOS', left + 100, y); doc.text(totG.toFixed(2), left + 450, y);
+    doc.setFont(undefined, 'normal');
+    y += 26;
+  }
+  // ---------- RESUMEN ----------
+  const balance = totM - totG;
+  if(y > 690) { doc.addPage(); y = encabezadoPDF([33,150,243], 'Resumen Final', []); }
+  else {
+    doc.setFillColor(33,150,243); doc.rect(left, y - 8, ancho, 22, 'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont(undefined, 'bold');
+    doc.text('BALANCE FINAL: $' + balance.toFixed(2), left + 10, y + 6);
+    doc.setFont(undefined, 'normal'); doc.setTextColor(0,0,0);
+    y += 30;
+    doc.setFontSize(9);
+    doc.text('Total Ingresos: $' + totM.toFixed(2) + '   |   Taxes: $' + (totF + totME + totS).toFixed(2) + '   |   Ingresos Neto: $' + (totM - totF - totME - totS).toFixed(2) + '   |   Total Gastos: $' + totG.toFixed(2), left + 10, y);
+  }
+  // ---------- PIE: número de página en todas ----------
+  const n = doc.getNumberOfPages();
+  for(let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setTextColor(130,130,130);
+    doc.text(titulo.substring(0, 60), left, 822);
+    doc.text('Página ' + i + ' de ' + n, left + ancho - 62, 822);
+    doc.setTextColor(0,0,0);
+  }
+  doc.save(`Reporte_Filtrado_${new Date().toISOString().split('T')[0]}.pdf`);
 }
 
 function generarReporteTaxes(anioFiltro = '', mesFiltro = '') {

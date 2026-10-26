@@ -1,2 +1,2 @@
 App de gastos de Fernando
-Actualizado: 2026-10-26 — boton Buscar, filtros ocultos y sincronizacion blindada.
+Actualizado: 2026-10-26 — Reporte profesional: el reporte sigue el filtro de la pestaña (año/mes y demás), con subtotales por página y encabezado repetido en cada página, al imprimir y en el PDF.
