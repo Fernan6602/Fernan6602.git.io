@@ -1,0 +1,2 @@
+App de gastos de Fernando
+Actualizado: 2026-10-26 — boton Buscar, filtros ocultos y sincronizacion blindada.
