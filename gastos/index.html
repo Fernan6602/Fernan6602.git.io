@@ -7769,5 +7769,207 @@ window.abrirSelectorReporte = abrirSelectorReporte;
 window.cerrarSelectorReporte = cerrarSelectorReporte;
 window.generarReporteDesdeSelector = generarReporteDesdeSelector;
 </script>
+
+<script>
+'use strict';
+/* ============================================================
+   SINCRONIZACIÓN EN LA NUBE vía GitHub (25-oct-2026)
+   A pedido de Fernando: la app guarda sus datos en el archivo
+   gastos/datos.json de su propio repo y los lee al abrir, para
+   que el móvil y la computadora vean lo mismo automáticamente.
+   La llave (token) vive SOLO en el localStorage de cada equipo;
+   nunca va escrita en esta página.
+   ============================================================ */
+(function () {
+  var REPO_API = 'https://api.github.com/repos/Fernan6602/Fernan6602.git.io/contents/gastos/datos.json';
+  var RAW_URL = 'https://raw.githubusercontent.com/Fernan6602/Fernan6602.git.io/main/gastos/datos.json';
+  var TOKEN_KEY = 'nube_github_token';
+  var CLAVES = ['pagos_gastos', 'pagos_gastos_v450', 'pagos_gastos_autosave', 'pagos_gastos_lastdata'];
+  var pushing = false;
+  var pushTimer = null;
+  var ultimoEmpuje = '';
+
+  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function fechaLocal() { try { return localStorage.getItem('pagos_gastos_lastSave') || ''; } catch (e) { return ''; } }
+
+  function b64encode(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    var CH = 0x8000;
+    for (var i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(bin);
+  }
+  function b64decode(b64) {
+    var bin = atob(String(b64).replace(/\s/g, ''));
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function estado(txt) {
+    var el = document.getElementById('nubeEstado');
+    if (el) el.textContent = txt;
+    try { console.log('[nube] ' + txt); } catch (e) {}
+  }
+
+  function totalDe(d) { return ((d && d.pagos) || []).length + ((d && d.gastos) || []).length; }
+
+  function datosLocales() {
+    try {
+      var d = JSON.parse(localStorage.getItem('pagos_gastos') || '{}');
+      return { pagos: d.pagos || [], gastos: d.gastos || [], config: d.config || {} };
+    } catch (e) { return { pagos: [], gastos: [], config: {} }; }
+  }
+
+  function leerNube() {
+    var t = token();
+    if (t) {
+      return fetch(REPO_API, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + t }, cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (j) { return { data: JSON.parse(b64decode(j.content)), sha: j.sha }; })
+        .catch(function () { return null; });
+    }
+    return fetch(RAW_URL + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { return { data: d, sha: null }; })
+      .catch(function () { return null; });
+  }
+
+  function aplicarDatos(nube) {
+    var payload = JSON.stringify({ pagos: nube.pagos || [], gastos: nube.gastos || [], config: nube.config || {} });
+    for (var i = 0; i < CLAVES.length; i++) { try { localStorage.setItem(CLAVES[i], payload); } catch (e) {} }
+    if (nube.config) { try { localStorage.setItem('pagos_gastos_config', JSON.stringify(nube.config)); } catch (e) {} }
+    try { localStorage.setItem('pagos_gastos_lastSave', nube.savedAt || new Date().toISOString()); } catch (e) {}
+    var ya = false;
+    try { ya = !!sessionStorage.getItem('nube_recargado'); } catch (e) {}
+    if (!ya) {
+      try { sessionStorage.setItem('nube_recargado', '1'); } catch (e) {}
+      estado('☁️ Bajé datos más nuevos de la nube. Recargando…');
+      setTimeout(function () { location.reload(); }, 700);
+    }
+  }
+
+  function sincronizarAlAbrir() {
+    return leerNube().then(function (res) {
+      if (!res || !res.data) {
+        estado(token()
+          ? '⚠️ No pude leer la nube ahora: sigues con los datos de este equipo.'
+          : '📴 Este equipo aún no tiene tu llave: la app trabaja local. Pega tu llave abajo para activar la nube.');
+        return;
+      }
+      var nube = res.data;
+      var nubeFecha = nube.savedAt || '';
+      var lf = fechaLocal();
+      var local = datosLocales();
+      if (nubeFecha && nubeFecha > lf && (totalDe(nube) !== totalDe(local) || !lf)) {
+        aplicarDatos(nube);
+        return;
+      }
+      if (lf && nubeFecha && lf > nubeFecha) {
+        estado('☁️ Este equipo tiene datos más nuevos: subiendolos a la nube…');
+        programarPush(1200);
+        return;
+      }
+      estado('☁️ Al día con la nube: ' + totalDe(nube) + ' registros.');
+    });
+  }
+
+  function programarPush(ms) {
+    if (!token()) return;
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(empujarNube, ms || 4000);
+  }
+
+  function empujarNube() {
+    if (pushing || !token()) return;
+    pushing = true;
+    leerNube().then(function (res) {
+      var lf = fechaLocal();
+      if (res && res.data && res.data.savedAt && lf && res.data.savedAt > lf && totalDe(res.data) !== totalDe(datosLocales())) {
+        pushing = false;
+        aplicarDatos(res.data);
+        return null;
+      }
+      var d = datosLocales();
+      var obj = { pagos: d.pagos, gastos: d.gastos, config: d.config, version: 'V4.51', savedAt: new Date().toISOString() };
+      var body = { message: 'Sync app gastos ' + obj.savedAt, content: b64encode(JSON.stringify(obj)) };
+      if (res && res.sha) body.sha = res.sha;
+      return fetch(REPO_API, {
+        method: 'PUT',
+        headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        try { localStorage.setItem('pagos_gastos_lastSave', obj.savedAt); } catch (e) {}
+        ultimoEmpuje = obj.savedAt;
+        estado('☁️ Sincronizado con la nube (' + totalDe(obj) + ' registros) a las ' + new Date().toLocaleTimeString() + '.');
+      });
+    }).catch(function (e) {
+      estado('⚠️ No se pudo subir a la nube (' + e.message + '). Tus datos están a salvo en este equipo; lo reintento solo.');
+    }).then(function () { pushing = false; });
+  }
+
+  function engancharGuardado() {
+    try {
+      if (typeof guardarLocal === 'function' && !guardarLocal.__nube) {
+        var original = guardarLocal;
+        var envuelta = function () { original(); programarPush(4000); };
+        envuelta.__nube = true;
+        guardarLocal = envuelta;
+      }
+    } catch (e) {}
+  }
+
+  function crearPanel() {
+    if (document.getElementById('panelNube')) return;
+    var div = document.createElement('div');
+    div.id = 'panelNube';
+    div.style.cssText = 'background:#e8f5e9;border:2px solid #2e7d32;border-radius:12px;padding:14px;margin:14px 0 96px 0;font-family:Arial,sans-serif;';
+    div.innerHTML =
+      '<h3 style="margin:0 0 6px 0;color:#1b5e20">☁️ Sincronización en la nube (tu GitHub)</h3>' +
+      '<p id="nubeEstado" style="margin:4px 0;font-size:14px">Comprobando…</p>' +
+      '<p style="margin:6px 0;font-size:13px">Pega tu llave de GitHub una sola vez en cada equipo (móvil y computadora). La llave se guarda solo en el navegador de ese equipo, nunca en la página.</p>' +
+      '<input id="nubeToken" type="password" placeholder="github_pat_…" autocomplete="off" style="width:100%;max-width:520px;padding:9px;border:1px solid #999;border-radius:8px;font-size:14px">' +
+      '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button id="nubeGuardarToken" style="padding:9px 14px;border-radius:8px;background:#2e7d32;color:#fff;border:none;font-weight:bold;cursor:pointer">Guardar llave</button>' +
+      '<button id="nubeSyncBtn" style="padding:9px 14px;border-radius:8px;background:#1565c0;color:#fff;border:none;font-weight:bold;cursor:pointer">Sincronizar ahora</button>' +
+      '</div>';
+    document.body.appendChild(div);
+    document.getElementById('nubeGuardarToken').addEventListener('click', function () {
+      var v = (document.getElementById('nubeToken').value || '').trim();
+      if (!v) { estado('⚠️ Pega primero tu llave en la casilla.'); return; }
+      try { localStorage.setItem(TOKEN_KEY, v); } catch (e) {}
+      document.getElementById('nubeToken').value = '';
+      estado('✅ Llave guardada en este equipo. Sincronizando…');
+      sincronizarAlAbrir();
+      programarPush(1500);
+    });
+    document.getElementById('nubeSyncBtn').addEventListener('click', function () {
+      sincronizarAlAbrir();
+      programarPush(1500);
+    });
+    if (token()) {
+      var inp = document.getElementById('nubeToken');
+      if (inp) inp.placeholder = 'Llave ya guardada en este equipo (pega otra solo para cambiarla)';
+    }
+  }
+
+  window.addEventListener('load', function () {
+    crearPanel();
+    engancharGuardado();
+    ultimoEmpuje = fechaLocal();
+    sincronizarAlAbrir();
+    setInterval(function () {
+      var lf = fechaLocal();
+      if (token() && lf && lf !== ultimoEmpuje) empujarNube();
+    }, 45000);
+    document.addEventListener('visibilitychange', function () {
+      var lf = fechaLocal();
+      if (document.hidden && token() && lf && lf !== ultimoEmpuje) empujarNube();
+    });
+  });
+})();
+
+</script>
 </body>
 </html>
