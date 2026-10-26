@@ -7808,6 +7808,7 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
   function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
   function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function fechaLocal() { try { return localStorage.getItem('pagos_gastos_lastSave') || ''; } catch (e) { return ''; } }
 
   function b64encode(str) {
     var bytes = new TextEncoder().encode(str);
@@ -7952,7 +7953,14 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
         return null;
       }
       var atGuardado = lsGet(SYNC_AT);
-      if (!atGuardado || (nube.savedAt || '') !== atGuardado) {
+      var nubeManda = !atGuardado || (nube.savedAt || '') !== atGuardado;
+      if (!nubeManda && lsGet(SYNC_HASH) && lsGet(SYNC_HASH) !== lh) {
+        /* Dice estar al dia pero no tiene ese contenido: si no hubo guardados
+           locales posteriores a la sincronizacion, la bajada no quedo aplicada
+           y manda la nube (autocuracion); si los hubo, son ediciones reales. */
+        if (!(fechaLocal() > atGuardado)) nubeManda = true;
+      }
+      if (nubeManda) {
         estado('☁️ La nube tiene datos más nuevos: actualizando este equipo…');
         aplicarDatos(nube);
         return null;
@@ -8034,6 +8042,8 @@ window.generarReporteDesdeSelector = generarReporteDesdeSelector;
     });
   });
 })();
+
+
 
 
 
