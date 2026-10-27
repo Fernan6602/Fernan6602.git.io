@@ -316,6 +316,10 @@
   .btn-calc { margin-left: 6px; padding: 4px 10px; font-size: 16px; cursor: pointer;
     background: #455a64; color: #fff; border: none; border-radius: 6px; vertical-align: middle; }
   .btn-calc:hover { background: #37474f; }
+  /* El botón queda pegado al Monto en la MISMA línea, sin caer debajo (27-oct-2026) */
+  .lbl-monto { display: inline-flex !important; align-items: center; white-space: nowrap; }
+  .lbl-monto input { width: 140px; }
+  .lbl-monto .btn-calc { flex: none; }
   #calcOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
     z-index: 9999; align-items: center; justify-content: center; }
   #calcOverlay.abierta { display: flex; }
@@ -5933,7 +5937,7 @@
     <h2>💰 Registrar Pagos</h2>
     <div>
       <label>Fecha:<input id="fechaPago" placeholder="DD/MM/AAAA" /></label>
-      <label>Monto:<input id="montoPago" type="number" step="0.01" /><button type="button" class="btn-calc" title="Calculadora" onclick="abrirCalc('montoPago')">🧮</button></label>
+      <label class="lbl-monto">Monto:<input id="montoPago" type="number" step="0.01" /><button type="button" class="btn-calc" title="Calculadora" onclick="abrirCalc('montoPago')">🧮</button></label>
       <label>Concepto:
         <select id="conceptoPago">
           <option value="Sueldo">Sueldo</option>
@@ -5989,7 +5993,7 @@
     <h2>💳 Registrar Gastos</h2>
     <div>
       <label>Fecha:<input id="fechaGasto" placeholder="DD/MM/AAAA" /></label>
-      <label>Monto:<input id="montoGasto" type="number" step="0.01" /><button type="button" class="btn-calc" title="Calculadora" onclick="abrirCalc('montoGasto')">🧮</button></label>
+      <label class="lbl-monto">Monto:<input id="montoGasto" type="number" step="0.01" /><button type="button" class="btn-calc" title="Calculadora" onclick="abrirCalc('montoGasto')">🧮</button></label>
       <label>Categoría:
         <select id="categoriaGasto"></select>
       </label>
