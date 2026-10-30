@@ -1,0 +1,17 @@
+{
+ "name": "Arbol Genealogico - Clara Juana y Roberto",
+ "short_name": "Mi Arbol",
+ "start_url": "./index.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#FBF7EE",
+ "theme_color": "#7D3C0A",
+ "icons": [
+  {
+   "src": "icono.svg",
+   "sizes": "any",
+   "type": "image/svg+xml",
+   "purpose": "any"
+  }
+ ]
+}
