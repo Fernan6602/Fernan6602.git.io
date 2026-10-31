@@ -6494,7 +6494,7 @@ function abrir(nombre){
   seccionActual = nombre;
   
   if(nombre==='resumen') { actualizarSelectAnios(); actualizarGrafico(); }
-  if(nombre==='vista') { actualizarSelectAnios(); generarVista(); }
+  if(nombre==='vista') { actualizarSelectAnios(); aplicarDefectoVista(); generarVista(); }
   if(nombre==='taxes') { actualizarSelectAnios(); generarReporteTaxes(); }
   if(nombre==='config') { renderConfiguracion(); }
 }
@@ -7544,6 +7544,22 @@ function aplicarFiltroFecha(registro, anio, mes) {
   return true;
 }
 
+// Orden de pantalla de mayor a menor (lo mas reciente primero). Solo afecta la vista; los datos guardados no cambian de orden.
+function claveFechaHora(r){
+  const p = String(r.fecha || '').split('/');
+  const dd = String(parseInt(p[0] || '0', 10) || 0).padStart(2, '0');
+  const mm = String(parseInt(p[1] || '0', 10) || 0).padStart(2, '0');
+  const yy = p[2] || '0000';
+  return yy + mm + dd + (r.hora || '00:00:00');
+}
+function compararDesc(a, b){
+  const ka = claveFechaHora(a), kb = claveFechaHora(b);
+  return ka < kb ? 1 : (ka > kb ? -1 : 0);
+}
+function indicesDesc(arr){
+  return arr.map((_, i) => i).sort((x, y) => compararDesc(arr[x], arr[y]) || (y - x));
+}
+
 const conceptoPago = document.getElementById('conceptoPago');
 conceptoPago.addEventListener('change', toggleTaxesVisibility);
 function toggleTaxesVisibility(){ document.getElementById('taxesBlock').classList[conceptoPago.value==='Sueldo'?'remove':'add']('hidden'); }
@@ -7552,7 +7568,7 @@ function renderTabla(tipo){
   if(tipo==='pagos'){
     const tbody=document.querySelector('#tablaPagos tbody'); tbody.innerHTML='';
     let totalFiltrado = 0, contador = 0;
-    pagos.forEach((p,i)=>{
+    indicesDesc(pagos).forEach(i=>{ const p = pagos[i];
       if(filtrosPagos.concepto && !coincide(p.concepto, filtrosPagos.concepto)) return;
       if(filtrosPagos.descripcion && !normalizarTexto(p.descripcion).includes(normalizarTexto(filtrosPagos.descripcion))) return;
       if((filtrosPagos.anio || filtrosPagos.mes) && !aplicarFiltroFecha(p, filtrosPagos.anio, filtrosPagos.mes)) return;
@@ -7575,7 +7591,7 @@ function renderTabla(tipo){
   } else {
     const tbody=document.querySelector('#tablaGastos tbody'); tbody.innerHTML='';
     let totalFiltrado = 0, contador = 0;
-    gastos.forEach((g,i)=>{
+    indicesDesc(gastos).forEach(i=>{ const g = gastos[i];
       if(filtrosGastos.categoria && !coincide(g.categoria, filtrosGastos.categoria)) return;
       if(filtrosGastos.banco && !coincide(g.banco, filtrosGastos.banco)) return;
       if(filtrosGastos.destino && !coincide(g.destino, filtrosGastos.destino)) return;
@@ -7793,6 +7809,21 @@ function inicializarFiltrosFecha() {
   });
 }
   
+let vistaDefectoAplicado = false;
+function aplicarDefectoVista(){
+  if (vistaDefectoAplicado) return;
+  vistaDefectoAplicado = true;
+  const selA = document.getElementById('filtroAnioVista');
+  const selM = document.getElementById('filtroMesVista');
+  if (!selA || !selM || selA.value !== '' || selM.value !== '') return;
+  let ultimo = null;
+  pagos.concat(gastos).forEach(r => { if (!ultimo || claveFechaHora(r) > claveFechaHora(ultimo)) ultimo = r; });
+  if (!ultimo) return;
+  const partes = String(ultimo.fecha).split('/');
+  if (partes[2]) selA.value = partes[2];
+  if (partes[1]) selM.value = String(parseInt(partes[1], 10) || 0).padStart(2, '0');
+}
+
 function generarVista(anioFiltro = '', mesFiltro = ''){
   if (anioFiltro && typeof anioFiltro === 'object') anioFiltro = '';
   if (mesFiltro && typeof mesFiltro === 'object') mesFiltro = '';
@@ -7804,6 +7835,8 @@ function generarVista(anioFiltro = '', mesFiltro = ''){
   }
   const pagosFiltrados = pagos.filter(p => aplicarFiltroFecha(p, anioFiltro, mesFiltro));
   const gastosFiltrados = gastos.filter(g => aplicarFiltroFecha(g, anioFiltro, mesFiltro));
+  pagosFiltrados.sort(compararDesc);
+  gastosFiltrados.sort(compararDesc);
   const totalPagos = pagosFiltrados.reduce((s,p)=>s+p.monto,0);
   const totalGastos = gastosFiltrados.reduce((s,g)=>s+g.monto,0);
   const balance = totalPagos - totalGastos;

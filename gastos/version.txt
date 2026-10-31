@@ -1,3 +1,4 @@
 App de gastos de Fernando
-Actualizado: 2026-10-27 — Calculadora junto al Monto en Pagos y en Gastos (botón 🧮 fijo en la misma línea del Monto): suma, resta, multiplica y divide con paréntesis, y pone el resultado directo en el Monto.
+Actualizado: 2026-10-31 — Movimientos de mayor a menor: las listas de Pagos y de Gastos y la Vista Previa muestran lo mas reciente primero, y la Vista Previa abre por defecto en el ultimo mes y ano con movimientos.
+Anterior: 2026-10-27 — Calculadora junto al Monto en Pagos y en Gastos (botón 🧮 fijo en la misma línea del Monto): suma, resta, multiplica y divide con paréntesis, y pone el resultado directo en el Monto.
 Anterior: 2026-10-26 — Reporte profesional: el reporte sigue el filtro de la pestaña (año/mes y demás), con subtotales por página y encabezado repetido en cada página, al imprimir y en el PDF.
