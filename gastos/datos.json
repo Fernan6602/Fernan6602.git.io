@@ -825,6 +825,20 @@
    "taxes": null,
    "fechaSalva": "03/11/2026",
    "horaSalva": "12:27:00"
+  },
+  {
+   "fecha": "07/11/2026",
+   "hora": "22:02:00",
+   "concepto": "Sueldo",
+   "descripcion": "Salario Ultra",
+   "monto": 1683.89,
+   "taxes": {
+    "FITW": 0,
+    "MED": 0,
+    "SS": 0
+   },
+   "fechaSalva": "06/11/2026",
+   "horaSalva": "22:02:00"
   }
  ],
  "gastos": [
@@ -5627,6 +5641,30 @@
    "monto": 47.95,
    "fechaSalva": "5/11/2026",
    "horaSalva": "19:14:00"
+  },
+  {
+   "fecha": "7/11/2026",
+   "hora": "10:47:00",
+   "categoria": "Envio Cash",
+   "banco": "Bank of America",
+   "destino": "Yadira Torres Pacheco",
+   "monto": 110,
+   "fechaSalva": "7/11/2026",
+   "horaSalva": "10:47:00",
+   "usuario": "Fernan",
+   "descripcion": "Envio de dinero por Zelle para Yadira y los ninos (familia en Cuba)"
+  },
+  {
+   "fecha": "7/11/2026",
+   "hora": "10:47:00",
+   "categoria": "Envio Cash",
+   "banco": "Bank of America",
+   "destino": "Olga Lidia Perez Ibarra",
+   "monto": 110,
+   "fechaSalva": "7/11/2026",
+   "horaSalva": "10:47:00",
+   "usuario": "Fernan",
+   "descripcion": "Envio de dinero por Zelle para Olga Lidia y Noise"
   }
  ],
  "config": {
