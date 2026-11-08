@@ -5632,15 +5632,15 @@
   },
   {
    "fecha": "5/11/2026",
-   "hora": "19:14:00",
+   "hora": "18:38:35",
    "categoria": "Comida",
    "banco": "Chase Bank",
    "usuario": "Fernan",
    "destino": "Fresco y Mas",
-   "descripcion": "Comida (Fresco y Mas, 1201 E 1, Hialeah; debito Chase, captura 5/11)",
+   "descripcion": "Comida (Fresco y Mas #0242, 1201 E 10th Ave, Hialeah; debito Chase ...1796; 13 articulos; ahorro $8.04; recibo 5/11 18:38)",
    "monto": 47.95,
-   "fechaSalva": "5/11/2026",
-   "horaSalva": "19:14:00"
+   "fechaSalva": "8/11/2026",
+   "horaSalva": "09:19:55"
   },
   {
    "fecha": "7/11/2026",
@@ -5665,6 +5665,18 @@
    "horaSalva": "10:47:00",
    "usuario": "Fernan",
    "descripcion": "Envio de dinero por Zelle para Olga Lidia y Noise"
+  },
+  {
+   "fecha": "6/11/2026",
+   "hora": "21:03:00",
+   "categoria": "Envio Cash",
+   "banco": "Chase Bank",
+   "usuario": "Fernan",
+   "destino": "Noise Santos Perez",
+   "descripcion": "Envio a su hijo Noise (Debeche, Cuba). Zelle recibido de Juan Dominguez Gonzalez (6/11 21:03) y transferido la misma noche; Chase quedo en $0.05",
+   "monto": 100,
+   "fechaSalva": "8/11/2026",
+   "horaSalva": "09:19:55"
   }
  ],
  "config": {
