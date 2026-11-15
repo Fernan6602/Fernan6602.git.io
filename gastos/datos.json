@@ -5749,18 +5749,6 @@
    "destino": "Curb Mobility",
    "monto": 82.38,
    "descripcion": "Taxi de regreso el 14/11 al aterrizar en Fort Lauderdale (Curb Mobility). Confirmado por Fernando: fue el taxi del regreso. En proceso en BofA"
-  },
-  {
-   "fecha": "14/11/2026",
-   "hora": "11:42:04",
-   "categoria": "Entrenamiento Canada",
-   "banco": "Bank of America",
-   "usuario": "Fernan",
-   "destino": "Cibo Express",
-   "monto": 7.93,
-   "descripcion": "Cargo adicional de Cibo Express F61 (Toronto) el 14/11, visto en el detalle del banco el 15/11 (US$7.93, aprox CA$11.28 al cambio 0.703). Sin recibo fotografiado. En proceso en BofA",
-   "fechaSalva": "15/11/2026",
-   "horaSalva": "15:39:00"
   }
  ],
  "config": {
@@ -5812,5 +5800,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T20:39:30.000Z"
+ "savedAt": "2026-11-15T20:42:09.000Z"
 }
