@@ -5573,7 +5573,7 @@
   {
    "fecha": "4/11/2026",
    "hora": "06:05:00",
-   "categoria": "Mercancia",
+   "categoria": "Entrenamiento Canada",
    "banco": "CapitalOne",
    "usuario": "Fernan",
    "destino": "Burlington Coat Factory",
@@ -5693,7 +5693,7 @@
   {
    "fecha": "4/11/2026",
    "hora": "06:05:00",
-   "categoria": "Mercancia",
+   "categoria": "Entrenamiento Canada",
    "banco": "Cash",
    "usuario": "Fernan",
    "destino": "Burlington Coat Factory",
@@ -5726,7 +5726,8 @@
    "Negocios Ventas",
    "Correo Postal USPS",
    "Pasaje Avion",
-   "Hyundai"
+   "Hyundai",
+   "Entrenamiento Canada"
   ],
   "destinos": [
    "RapiCargo",
@@ -5751,5 +5752,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T16:11:05.000Z"
+ "savedAt": "2026-11-15T16:42:32.000Z"
 }
