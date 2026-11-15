@@ -5689,6 +5689,18 @@
    "monto": 44.73,
    "fechaSalva": "15/11/2026",
    "horaSalva": "10:44:12"
+  },
+  {
+   "fecha": "4/11/2026",
+   "hora": "06:05:00",
+   "categoria": "Mercancia",
+   "banco": "Cash",
+   "usuario": "Fernan",
+   "destino": "Burlington Coat Factory",
+   "descripcion": "Ropa de frio para el viaje a Canada (parte en efectivo del recibo de Burlington 4/11; recibo total $222.47 = $200 CapitalOne + $22.47 efectivo)",
+   "monto": 22.47,
+   "fechaSalva": "15/11/2026",
+   "horaSalva": "11:13:00"
   }
  ],
  "config": {
@@ -5739,5 +5751,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T15:45:35.000Z"
+ "savedAt": "2026-11-15T16:11:05.000Z"
 }
