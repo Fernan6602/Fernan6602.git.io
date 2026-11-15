@@ -5748,7 +5748,7 @@
    "hora": "11:42:03",
    "destino": "Curb Mobility",
    "monto": 82.38,
-   "descripcion": "Transporte el 14/11 al regreso (Curb Mobility, taxi). En proceso en BofA"
+   "descripcion": "Taxi de regreso el 14/11 al aterrizar en Fort Lauderdale (Curb Mobility). Confirmado por Fernando: fue el taxi del regreso. En proceso en BofA"
   }
  ],
  "config": {
@@ -5800,5 +5800,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T16:45:47.000Z"
+ "savedAt": "2026-11-15T17:00:54.000Z"
 }
