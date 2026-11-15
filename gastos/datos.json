@@ -5712,7 +5712,7 @@
    "hora": "11:42:00",
    "destino": "Cibo Express",
    "monto": 13.1,
-   "descripcion": "Comida en el aeropuerto de Toronto (Cibo Express, puerta F61, escala del regreso 14/11). En proceso en BofA: el monto puede variar al postear"
+   "descripcion": "Recibo Cibo Express F61 Toronto 14/11 8:40 AM (CHK 30107991): sub italiano halal. Total CA$18.63 = cargo US$13.10 (MasterCard debito ...0922)"
   },
   {
    "fecha": "14/11/2026",
@@ -5722,9 +5722,9 @@
    "fechaSalva": "15/11/2026",
    "horaSalva": "11:45:00",
    "hora": "11:42:01",
-   "destino": "Aeropuerto de Toronto",
+   "destino": "Cibo Express",
    "monto": 23.41,
-   "descripcion": "Pan con queso y ensalada (comida en la escala de Toronto, 14/11). Confirmado por Fernando. En proceso en BofA: el monto puede variar al postear"
+   "descripcion": "Recibo Cibo Express F61 Toronto 14/11 12:19 PM (CHK 30108055): sub de carnes surtidas, Fresca 500ml, chips Kettle, Reese's y brownie. Total CA$33.30 = cargo US$23.41 (MasterCard debito ...0922). NOTA: este NO era el pan con queso; ese fue el de las 3:22 PM"
   },
   {
    "fecha": "14/11/2026",
@@ -5736,7 +5736,7 @@
    "hora": "11:42:02",
    "destino": "Cibo Express",
    "monto": 19.84,
-   "descripcion": "Comida en el aeropuerto de Toronto (Cibo Express, puerta F61, escala del regreso 14/11). En proceso en BofA: el monto puede variar al postear"
+   "descripcion": "Recibo Cibo Express F61 Toronto 14/11 3:22 PM (CHK 30108125): sub de jamon y queso suizo con pavo ahumado (el pan con queso), Fresca 500ml y barra KIND. Total CA$28.22 = cargo US$19.84 (MasterCard debito ...0922)"
   },
   {
    "fecha": "14/11/2026",
@@ -5800,5 +5800,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T17:03:35.000Z"
+ "savedAt": "2026-11-15T20:34:50.000Z"
 }
