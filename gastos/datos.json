@@ -5722,9 +5722,9 @@
    "fechaSalva": "15/11/2026",
    "horaSalva": "11:45:00",
    "hora": "11:42:01",
-   "destino": "Compra Toronto 14/11",
+   "destino": "Aeropuerto de Toronto",
    "monto": 23.41,
-   "descripcion": "Compra en Ontario el 14/11 durante la escala en Toronto (el nombre del comercio sale cortado en la captura de BofA). En proceso: el monto puede variar al postear"
+   "descripcion": "Pan con queso y ensalada (comida en la escala de Toronto, 14/11). Confirmado por Fernando. En proceso en BofA: el monto puede variar al postear"
   },
   {
    "fecha": "14/11/2026",
@@ -5800,5 +5800,5 @@
   ]
  },
  "version": "V4.51",
- "savedAt": "2026-11-15T17:00:54.000Z"
+ "savedAt": "2026-11-15T17:03:35.000Z"
 }
